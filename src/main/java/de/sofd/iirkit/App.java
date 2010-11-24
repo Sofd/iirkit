@@ -2,10 +2,6 @@ package de.sofd.iirkit;
 
 import org.hsqldb.jdbcDriver;
 
-/**
- * Hello world!
- *
- */
 public class App 
 {
     public static void main( String[] args ) throws Exception {

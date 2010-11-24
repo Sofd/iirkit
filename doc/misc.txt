@@ -1,0 +1,33 @@
+tables:
+
+- user(userName, password, role)
+
+- cases(userName, caseNumber, hangingProtocol*, result)
+
+  - hangingProtocol*: evtl. beliebig viele Spalten, vom Kunden
+    vergebbar, landen als variable Parameterliste oder
+    name-value-Mapping in JS
+
+  - Informationen in hangingProtocol:
+
+    - pro Bildschirm Liste von Serienreferenzen
+
+    - URL für eCRF
+
+      - vielleicht URL auf Verzeichnis mit HTML-Datei und
+        Validierungsfunktion
+
+    - Liste von Serienreferenzen = Oberverzeichnisname (ein
+      Unterverzeichnis pro Serie) oder mglw. PACS-Referenz
+      (AE,Host,Port,Liste von SeriesUIDs)
+
+- beim Programmstart Konsistenzprüfung auf allen Tabellen,
+  ggf. Programmabbruch. Zu prüfen:
+
+  - user.userName unique
+
+  - cases.userName references user.userName
+
+  - cases.caseNumber fortlaufend
+
+  - Lesbarkeit von Serien/Bildern/HTML-Files aus hangingProtocol
