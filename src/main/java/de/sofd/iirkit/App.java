@@ -1,7 +1,7 @@
 package de.sofd.iirkit;
 
 import de.sofd.iirkit.service.IirService;
-import de.sofd.iirkit.service.HsqlServiceImpl;
+import de.sofd.iirkit.service.HsqlIirServiceImpl;
 import de.sofd.iirkit.service.User;
 import org.hsqldb.jdbcDriver;
 
@@ -12,7 +12,7 @@ public class App
         System.out.println( "Hello World!" );
         //org.mozilla.javascript.tools.shell.Main.main(new String[0]);
 
-        IirService svc = new HsqlServiceImpl();
+        IirService svc = new HsqlIirServiceImpl();
         for (User user : svc.getAllUsers()) {
             System.out.println("" + user);
         }

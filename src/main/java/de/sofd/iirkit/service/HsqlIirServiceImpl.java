@@ -15,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author olaf
  */
-public class HsqlServiceImpl implements IirService {
+public class HsqlIirServiceImpl implements IirService {
 
     private final SimpleJdbcTemplate jdbcTemplate;
 
-    public HsqlServiceImpl() {
+    public HsqlIirServiceImpl() {
         ApplicationContext ctx = new ClassPathXmlApplicationContext("/spring-beans.xml");
         DataSource ds =  (DataSource) ctx.getBean("dataSource");
         jdbcTemplate = new SimpleJdbcTemplate(ds);
