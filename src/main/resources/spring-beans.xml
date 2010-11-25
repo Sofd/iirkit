@@ -40,4 +40,12 @@
 
     <tx:annotation-driven transaction-manager="transactionManager" />
 
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+
+    <bean id="iirService" class="de.sofd.iirkit.service.HsqlIirServiceImpl">
+        <constructor-arg ref="jdbcTemplate"/>
+    </bean>
+
 </beans>

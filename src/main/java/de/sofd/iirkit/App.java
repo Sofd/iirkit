@@ -1,9 +1,10 @@
 package de.sofd.iirkit;
 
 import de.sofd.iirkit.service.IirService;
-import de.sofd.iirkit.service.HsqlIirServiceImpl;
 import de.sofd.iirkit.service.User;
 import org.hsqldb.jdbcDriver;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App 
 {
@@ -12,7 +13,8 @@ public class App
         System.out.println( "Hello World!" );
         //org.mozilla.javascript.tools.shell.Main.main(new String[0]);
 
-        IirService svc = new HsqlIirServiceImpl();
+        ApplicationContext ctx = new ClassPathXmlApplicationContext("/spring-beans.xml");
+        IirService svc = (IirService) ctx.getBean("iirService");
         for (User user : svc.getAllUsers()) {
             System.out.println("" + user);
         }

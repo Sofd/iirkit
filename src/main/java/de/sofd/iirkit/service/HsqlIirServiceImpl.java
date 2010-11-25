@@ -3,9 +3,6 @@ package de.sofd.iirkit.service;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import javax.sql.DataSource;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.transaction.annotation.Propagation;
@@ -19,13 +16,10 @@ public class HsqlIirServiceImpl implements IirService {
 
     private final SimpleJdbcTemplate jdbcTemplate;
 
-    public HsqlIirServiceImpl() {
-        ApplicationContext ctx = new ClassPathXmlApplicationContext("/spring-beans.xml");
-        DataSource ds =  (DataSource) ctx.getBean("dataSource");
-        jdbcTemplate = new SimpleJdbcTemplate(ds);
+    public HsqlIirServiceImpl(SimpleJdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    //TODO: the tx manager apparently isn't used -- because we're not creating the service from the spring XML?
     @Override
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public List<User> getAllUsers() {
