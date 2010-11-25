@@ -1,5 +1,6 @@
 package de.sofd.iirkit.service;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,10 +15,16 @@ public class User {
     protected String password;
     protected Collection<String> roles;
 
-    public User(String name, String password, Collection roles) {
+    public User(String name, String password, Collection<String> roles) {
         this.name = name;
         this.password = password;
         this.roles = roles;
+    }
+
+    public User(String name, String password, String[] roles) {
+        this.name = name;
+        this.password = password;
+        this.roles = Arrays.asList(roles);
     }
 
     /**
@@ -72,6 +79,11 @@ public class User {
      */
     public void setRoles(Collection<String> roles) {
         this.roles = new HashSet<String>(roles);
+    }
+
+    @Override
+    public String toString() {
+        return "[User: name=" + getName() + ", roles=" + roles + "]";
     }
 
 }
