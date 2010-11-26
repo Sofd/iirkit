@@ -1,13 +1,11 @@
 package de.sofd.iirkit.service;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
-import org.springframework.jdbc.datasource.init.DatabasePopulator;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author olaf
  */
-public class HsqlIirServiceImpl implements IirService, DatabasePopulator {
+public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
 
     protected static Logger logger = Logger.getLogger(HsqlIirServiceImpl.class);
 
@@ -50,6 +48,7 @@ public class HsqlIirServiceImpl implements IirService, DatabasePopulator {
         return jdbcTemplate.query("select userName, caseNr, hangingProtocol, result from iircase", new CaseRowMapper());
     }
 
+    /*
     @Override
     public void populate(Connection cnctn) throws SQLException {
         try {
@@ -69,5 +68,6 @@ public class HsqlIirServiceImpl implements IirService, DatabasePopulator {
         cnctn.createStatement().execute("select count(*) from user");
         cnctn.createStatement().execute("select count(*) from iircase");
     }
+    */
 
 }

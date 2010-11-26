@@ -48,10 +48,16 @@
         <constructor-arg ref="jdbcTemplate"/>
     </bean>
 
+    <!--
 	<bean id="dataSourceInitializer"
 		class="org.springframework.jdbc.datasource.init.DataSourceInitializer">
 		<property name="dataSource" ref="dataSource" />
 		<property name="DatabasePopulator" ref="iirService" />
 	</bean>
+    -->
+
+    <jdbc:initialize-database data-source="dataSource">
+        <jdbc:script location="classpath:hsql-init.sql"/>
+    </jdbc:initialize-database>
 
 </beans>
