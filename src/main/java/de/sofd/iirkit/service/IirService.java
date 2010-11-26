@@ -6,8 +6,6 @@
 package de.sofd.iirkit.service;
 
 import java.util.List;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
@@ -15,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 public interface IirService {
 
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     List<User> getAllUsers();
 
+    List<Case> getAllCases();
 }

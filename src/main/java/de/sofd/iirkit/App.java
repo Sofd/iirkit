@@ -1,5 +1,6 @@
 package de.sofd.iirkit;
 
+import de.sofd.iirkit.service.Case;
 import de.sofd.iirkit.service.IirService;
 import de.sofd.iirkit.service.User;
 import org.hsqldb.jdbcDriver;
@@ -18,7 +19,11 @@ public class App
         for (User user : svc.getAllUsers()) {
             System.out.println("" + user);
         }
-        
+
+        for (Case c : svc.getAllCases()) {
+            System.out.println("" + c);
+        }
+
         System.out.println("DONE.");
     }
 }
