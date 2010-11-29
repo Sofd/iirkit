@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import org.apache.log4j.Logger;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.transaction.annotation.Propagation;
@@ -46,7 +47,7 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     @Override
     public User getUser(String name) {
-        return jdbcTemplate.queryForObject("select name, password, roles from user where name=?", new UserRowMapper(), name);
+        return queryForZeroOrOneObject(jdbcTemplate, "select name, password, roles from user where name=?", new UserRowMapper(), name);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
@@ -77,11 +78,19 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     @Override
     public Case getNextCaseOf(User user) {
-        return jdbcTemplate.queryForObject("select * FROM iircase where userName=? and result is null order by caseNr asc limit 1", new CaseRowMapper(), user.getName());
+        return queryForZeroOrOneObject(jdbcTemplate, "select * FROM iircase where userName = ? and result is null order by caseNr asc limit 1", new CaseRowMapper(), user.getName());
     }
 
     public void update(Case c) {
 
+    }
+
+    public static <T> T queryForZeroOrOneObject(SimpleJdbcTemplate templ, String sql, RowMapper<T> rm, Object... args) throws DataAccessException {
+        List<T> results = templ.query(sql, rm, args);
+        if (results.isEmpty()) {
+            return null;
+        }
+        return results.iterator().next();
     }
 
     /*

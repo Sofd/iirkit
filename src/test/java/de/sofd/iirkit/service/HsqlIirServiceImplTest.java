@@ -131,7 +131,7 @@ public class HsqlIirServiceImplTest extends TestCase {
         cases.get(0).getHangingProtocol().startsWith("c");
 
         User hans = svc.getUser("hans");
-        svc.getCasesOf(hans);
+        cases = svc.getCasesOf(hans);
         assertEquals(5, cases.size());
         cases.get(0).getHangingProtocol().startsWith("hc");
     }
