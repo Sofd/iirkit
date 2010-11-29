@@ -1,9 +1,10 @@
 package de.sofd.iirkit.service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 
 /**
  *
@@ -13,12 +14,12 @@ public class User {
 
     protected String name;
     protected String password;
-    protected Collection<String> roles;
+    protected List<String> roles;
 
     public User(String name, String password, Collection<String> roles) {
         this.name = name;
         this.password = password;
-        this.roles = roles;
+        this.roles = new ArrayList<String>(roles);
     }
 
     public User(String name, String password, String[] roles) {
@@ -68,8 +69,8 @@ public class User {
      *
      * @return the value of roles
      */
-    public Collection<String> getRoles() {
-        return Collections.unmodifiableCollection(roles);
+    public List<String> getRoles() {
+        return Collections.unmodifiableList(roles);
     }
 
     /**
@@ -78,7 +79,7 @@ public class User {
      * @param roles new value of roles
      */
     public void setRoles(Collection<String> roles) {
-        this.roles = new HashSet<String>(roles);
+        this.roles = new ArrayList<String>(roles);
     }
 
     @Override

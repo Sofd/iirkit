@@ -43,9 +43,45 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
         return jdbcTemplate.query("select name, password, roles from user", new UserRowMapper());
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     @Override
+    public User getUser(String name) {
+        return jdbcTemplate.queryForObject("select name, password, roles from user where name=?", new UserRowMapper(), name);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
+    @Override
+    public User authUser(String name, String password) {
+        User u = getUser(name);
+        if (u == null) {
+            throw new RuntimeException("unknown user " + name);
+        }
+        if (!(password.equals(u.getPassword()))) {
+            throw new RuntimeException("wrong password for user " + name);
+        }
+        return u;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public List<Case> getAllCases() {
         return jdbcTemplate.query("select userName, caseNr, hangingProtocol, result from iircase", new CaseRowMapper());
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
+    public List<Case> getCasesOf(User user) {
+        return jdbcTemplate.query("select userName, caseNr, hangingProtocol, result from iircase where userName = ?", new CaseRowMapper(), user.getName());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
+    @Override
+    public Case getNextCaseOf(User user) {
+        return jdbcTemplate.queryForObject("select * FROM iircase where userName=? and result is null order by caseNr asc limit 1", new CaseRowMapper(), user.getName());
+    }
+
+    public void update(Case c) {
+
     }
 
     /*
