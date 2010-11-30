@@ -24,4 +24,6 @@ public interface IirService {
     User authUser(String name, String password);
 
     User getUser(String name);
+
+    void update(Case c);
 }

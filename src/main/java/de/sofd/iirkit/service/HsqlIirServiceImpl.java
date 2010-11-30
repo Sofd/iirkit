@@ -34,7 +34,11 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
     protected class CaseRowMapper implements RowMapper<Case> {
         @Override
         public Case mapRow(ResultSet rs, int i) throws SQLException {
-            return new Case(rs.getInt("caseNr"), rs.getString("hangingProtocol"), rs.getString("result"));
+            String res = rs.getString("result");
+            if ("".equals(res)) {
+                res = null;
+            }
+            return new Case(rs.getInt("caseNr"), rs.getString("hangingProtocol"), res);
         }
     }
 
@@ -79,11 +83,13 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
     @Override
     public Case getNextCaseOf(User user) {
         //"result is null" works in jdbc and with SimpleJdbcTemplate from the js console, but not in the unit test..?? WTF??
-        return queryForZeroOrOneObject(jdbcTemplate, "select * FROM iircase where userName = ? and result='' order by caseNr asc limit 1", new CaseRowMapper(), user.getName());
+        return queryForZeroOrOneObject(jdbcTemplate, "select * FROM iircase where userName = ? and (result='' or result is null) order by caseNr asc limit 1", new CaseRowMapper(), user.getName());
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    @Override
     public void update(Case c) {
-
+        jdbcTemplate.update("update iircase set caseNr=?, hangingProtocol=?, result=? where userName=?", c.getNumber(), c.getHangingProtocol(), c.getResult(), c.getUser().getName());
     }
 
     public static <T> T queryForZeroOrOneObject(SimpleJdbcTemplate templ, String sql, RowMapper<T> rm, Object... args) throws DataAccessException {
