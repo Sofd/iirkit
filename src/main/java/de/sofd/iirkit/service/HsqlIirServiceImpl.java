@@ -83,7 +83,11 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
     @Override
     public Case getNextCaseOf(User user) {
         //"result is null" works in jdbc and with SimpleJdbcTemplate from the js console, but not in the unit test..?? WTF??
-        return queryForZeroOrOneObject(jdbcTemplate, "select * FROM iircase where userName = ? and (result='' or result is null) order by caseNr asc limit 1", new CaseRowMapper(), user.getName());
+        Case result = queryForZeroOrOneObject(jdbcTemplate, "select * FROM iircase where userName = ? and (result='' or result is null) order by caseNr asc limit 1", new CaseRowMapper(), user.getName());
+        if (result != null) {
+            result.setUser(user);
+        }
+        return result;
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)

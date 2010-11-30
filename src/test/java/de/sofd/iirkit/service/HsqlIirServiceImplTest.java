@@ -166,9 +166,9 @@ public class HsqlIirServiceImplTest extends TestCase {
         assertEquals("theResult", c.getResult());
         svc.update(c);
         Case c2 = svc.getNextCaseOf(olaf);
-        assertEquals(4, c.getNumber());
-        assertEquals("c4hp", c.getHangingProtocol());
-        assertNull(c.getResult());
+        assertEquals(4, c2.getNumber());
+        assertEquals("c4hp", c2.getHangingProtocol());
+        assertNull(c2.getResult());
     }
 
 }
