@@ -158,17 +158,51 @@ public class HsqlIirServiceImplTest extends TestCase {
     public void testUpdate() {
         System.out.println("update");
         User olaf = svc.getUser("olaf");
+        User hans = svc.getUser("hans");
+
         Case c = svc.getNextCaseOf(olaf);
         assertEquals(3, c.getNumber());
         assertEquals("c3hp", c.getHangingProtocol());
         assertNull(c.getResult());
-        c.setResult("theResult");
-        assertEquals("theResult", c.getResult());
+        c.setResult("res3");
+        assertEquals("res3", c.getResult());
         svc.update(c);
-        Case c2 = svc.getNextCaseOf(olaf);
-        assertEquals(4, c2.getNumber());
-        assertEquals("c4hp", c2.getHangingProtocol());
-        assertNull(c2.getResult());
+
+        c = svc.getNextCaseOf(hans);
+        assertEquals(4, c.getNumber());
+        assertEquals("hc4hp", c.getHangingProtocol());
+        assertNull(c.getResult());
+        c.setResult("hres4");
+        assertEquals("hres4", c.getResult());
+        svc.update(c);
+
+        c = svc.getNextCaseOf(hans);
+        assertEquals(5, c.getNumber());
+        assertEquals("hc5hp", c.getHangingProtocol());
+
+        c = svc.getNextCaseOf(olaf);
+        assertEquals(4, c.getNumber());
+        assertEquals("c4hp", c.getHangingProtocol());
+        assertNull(c.getResult());
+        c.setResult("res4");
+        svc.update(c);
+
+        c = svc.getNextCaseOf(olaf);
+        assertEquals(5, c.getNumber());
+        assertEquals("c5hp", c.getHangingProtocol());
+        assertNull(c.getResult());
+        c.setResult("res5");
+        svc.update(c);
+
+        c = svc.getNextCaseOf(olaf);
+        assertEquals(6, c.getNumber());
+        assertEquals("c6hp", c.getHangingProtocol());
+        assertNull(c.getResult());
+        c.setResult("res6");
+        svc.update(c);
+
+        c = svc.getNextCaseOf(olaf);
+        assertNull(c);
     }
 
 }
