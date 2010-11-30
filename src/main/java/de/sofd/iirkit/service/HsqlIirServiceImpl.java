@@ -92,8 +92,8 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     @Override
-    public void update(Case c) {
-        jdbcTemplate.update("update iircase set caseNr=?, hangingProtocol=?, result=? where userName=?", c.getNumber(), c.getHangingProtocol(), c.getResult(), c.getUser().getName());
+    public int update(Case c) {
+        return jdbcTemplate.update("update iircase set hangingProtocol=?, result=? where userName=? and caseNr=?", c.getHangingProtocol(), c.getResult(), c.getUser().getName(), c.getNumber());
     }
 
     public static <T> T queryForZeroOrOneObject(SimpleJdbcTemplate templ, String sql, RowMapper<T> rm, Object... args) throws DataAccessException {

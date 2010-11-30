@@ -25,5 +25,5 @@ public interface IirService {
 
     User getUser(String name);
 
-    void update(Case c);
+    int update(Case c);
 }
