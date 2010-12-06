@@ -3,3 +3,8 @@
 \.chg\..*$
 \.rej$
 \.conflict\~$
+lib/ivy/
+lib/[^/]*\.jar$
+build/
+nbproject/private/
+dist/
