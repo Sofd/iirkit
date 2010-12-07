@@ -1,29 +1,61 @@
 package de.sofd.iirkit;
 
-import de.sofd.iirkit.service.Case;
 import de.sofd.iirkit.service.IirService;
-import de.sofd.iirkit.service.User;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import javax.swing.JFrame;
 import org.hsqldb.jdbcDriver;
+import org.jdesktop.application.SingleFrameApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class App 
-{
-    public static void main( String[] args ) throws Exception {
+
+public class App extends SingleFrameApplication {
+
+        /**
+     * At startup create and show the main frame of the application.
+     */
+    @Override protected void startup() {
         org.hsqldb.jdbcDriver dr = new jdbcDriver();
         System.out.println( "Hello World!" );
         //org.mozilla.javascript.tools.shell.Main.main(new String[0]);
 
         ApplicationContext ctx = new ClassPathXmlApplicationContext("/spring-beans.xml");
         IirService svc = (IirService) ctx.getBean("iirService");
-        for (User user : svc.getAllUsers()) {
-            System.out.println("" + user);
-        }
 
-        for (Case c : svc.getAllCases()) {
-            System.out.println("" + c);
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] gs = ge.getScreenDevices();
+        int gsIdx = 0;
+        if (gs.length >= 3) {
+            gsIdx = 1;
         }
-
-        System.out.println("DONE.");
+        JFrame dummyFrame = new JFrame(gs[gsIdx].getDefaultConfiguration());
+        //LoginDialog loginDialog = new LoginDialog(dummyFrame, true);
+        //loginDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
+        //loginDialog.setVisible(true);
     }
+
+    /**
+     * This method is to initialize the specified window by injecting resources.
+     * Windows shown in our application come fully initialized from the GUI
+     * builder, so this additional configuration is not needed.
+     */
+    @Override protected void configureWindow(java.awt.Window root) {
+    }
+
+    /**
+     * A convenient static getter for the application instance.
+     * @return the instance of App
+     */
+    public static App getApplication() {
+        return App.getInstance(App.class);
+    }
+
+    /**
+     * Main method launching the application.
+     */
+    public static void main(String[] args) {
+        launch(App.class, args);
+    }
+
 }
