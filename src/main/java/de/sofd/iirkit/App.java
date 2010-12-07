@@ -4,7 +4,6 @@ import de.sofd.iirkit.service.IirService;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import javax.swing.JFrame;
-import org.hsqldb.jdbcDriver;
 import org.jdesktop.application.SingleFrameApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -12,16 +11,16 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App extends SingleFrameApplication {
 
-        /**
+    /**
      * At startup create and show the main frame of the application.
      */
     @Override protected void startup() {
-        org.hsqldb.jdbcDriver dr = new jdbcDriver();
         System.out.println( "Hello World!" );
         //org.mozilla.javascript.tools.shell.Main.main(new String[0]);
 
         ApplicationContext ctx = new ClassPathXmlApplicationContext("/spring-beans.xml");
-        IirService svc = (IirService) ctx.getBean("iirService");
+        IirService iirSvc = (IirService) ctx.getBean("iirService");
+        SecurityContext secCtx = (SecurityContext) ctx.getBean("securityContext");
 
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
@@ -30,9 +29,12 @@ public class App extends SingleFrameApplication {
             gsIdx = 1;
         }
         JFrame dummyFrame = new JFrame(gs[gsIdx].getDefaultConfiguration());
-        //LoginDialog loginDialog = new LoginDialog(dummyFrame, true);
-        //loginDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
-        //loginDialog.setVisible(true);
+        LoginDialog loginDialog = new LoginDialog(secCtx, dummyFrame, true);
+        loginDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
+        loginDialog.setVisible(true);
+
+        System.out.println("user=" + secCtx.getUser() + ", authority=" + secCtx.getAuthority());
+        exit();
     }
 
     /**

@@ -16,16 +16,20 @@ public class User {
     protected String password;
     protected List<String> roles;
 
+    public static final String ROLE_USER = "user";
+    public static final String ROLE_READER = "reader";
+    public static final String ROLE_ADMIN = "admin";
+
     public User(String name, String password, Collection<String> roles) {
         this.name = name;
         this.password = password;
-        this.roles = new ArrayList<String>(roles);
+        this.roles = checkRoles(new ArrayList<String>(roles));
     }
 
     public User(String name, String password, String[] roles) {
         this.name = name;
         this.password = password;
-        this.roles = Arrays.asList(roles);
+        this.roles = checkRoles(Arrays.asList(roles));
     }
 
     /**
@@ -73,13 +77,26 @@ public class User {
         return Collections.unmodifiableList(roles);
     }
 
+    public boolean hasRole(String r) {
+        return getRoles().contains(r);
+    }
+
     /**
      * Set the value of roles
      *
      * @param roles new value of roles
      */
     public void setRoles(Collection<String> roles) {
-        this.roles = new ArrayList<String>(roles);
+        this.roles = checkRoles(new ArrayList<String>(roles));
+    }
+
+    protected final List<String> checkRoles(List<String> roles) {
+        for (String r : roles) {
+            if (!r.equals(ROLE_USER) && !r.equals(ROLE_READER) && !r.equals(ROLE_ADMIN)) {
+                throw new IllegalArgumentException("unknown role: " + r);
+            }
+        }
+        return roles;
     }
 
     @Override

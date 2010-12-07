@@ -1,11 +1,13 @@
 package de.sofd.iirkit;
 
+import de.sofd.iirkit.service.IirService;
+import de.sofd.iirkit.service.User;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,12 +36,20 @@ public class SecurityContext {
     static final String SUPERADMIN_USERNAME = "superadmin";
     static final String SUPERADMIN_PASSWORD = "all4digima!";
     @Autowired
-    private UserService userService;
+    private IirService iirService;
     private User user;
     private Authority authority = Authority.User;
     List<String> readerIdList;
     List<String> managerIdList;
     Map<String, Integer> authenticationAttempts = new HashMap<String, Integer>();
+
+    public IirService getIirService() {
+        return iirService;
+    }
+
+    public void setIirService(IirService iirService) {
+        this.iirService = iirService;
+    }
 
     public AuthenticationResult create(String username, String password) {
         log4jLogger.info("create: " + username + ", " + password);
@@ -62,34 +72,20 @@ public class SecurityContext {
             log4jLogger.info("create: " + AuthenticationResult.EMPTY_USER_PASSWORD);
             return AuthenticationResult.EMPTY_USER_PASSWORD;
         }
-        User userToAuthenticate = userService.getUserByUsername(StringUtils.trimToNull(username));
+        User userToAuthenticate = iirService.getUser(StringUtils.trimToNull(username));
         if (userToAuthenticate == null) {
             log4jLogger.info("create: " + AuthenticationResult.WRONG_USER);
             return AuthenticationResult.WRONG_USER;
         }
         if (StringUtils.trimToEmpty(userToAuthenticate.getPassword()).equals(password)) {
             user = userToAuthenticate;
-            String[] readerIdArray = StringUtils.splitByWholeSeparator(Context.getApplicationProperties().getProperty("readerIdList"), ",");
-            log4jLogger.info("create - readerIdArray: " + readerIdArray);
-            readerIdList = Arrays.asList(readerIdArray);
-            String[] managerIdArray = StringUtils.splitByWholeSeparator(Context.getApplicationProperties().getProperty("managerIdList"), ",");
-            log4jLogger.info("create - managerIdArray: " + readerIdArray);
-            managerIdList = Arrays.asList(managerIdArray);
-            for (String strId : readerIdList) {
-                if (strId.equals(user.getId().toString())) {
-                    authority = Authority.Reader;
-                    break;
-                }
+            if (user.hasRole(User.ROLE_READER)) {
+                authority = Authority.Reader;
             }
-            if (authority.equals(Authority.User)) {
-                for (String strId : managerIdList) {
-                    if (strId.equals(user.getId().toString())) {
-                        authority = Authority.Manager;
-                        break;
-                    }
-                }
+            if (user.hasRole(User.ROLE_ADMIN)) {
+                authority = Authority.Manager;
             }
-            log4jLogger.info("create: " + AuthenticationResult.OK + " - username: " + user.getUsername() + " - authority: " + authority);
+            log4jLogger.info("create: " + AuthenticationResult.OK + " - username: " + user.getName() + " - authority: " + authority);
             authenticationAttempts.clear();
             return AuthenticationResult.OK;
         }
@@ -117,7 +113,7 @@ public class SecurityContext {
             log4jLogger.info("verify: " + AuthenticationResult.EMPTY_USER_PASSWORD);
             return AuthenticationResult.EMPTY_USER_PASSWORD;
         }
-        if (!user.getUsername().equals(username)) {
+        if (!user.getName().equals(username)) {
             log4jLogger.info("verify: " + AuthenticationResult.WRONG_USER);
             return AuthenticationResult.WRONG_USER;
         }
@@ -154,7 +150,7 @@ public class SecurityContext {
         log4jLogger.info("lock: " + username);
         Writer fw = null;
         try {
-            URL fileUrl = Context.createFileUrlFromPropertiesDir(username + ".lock");
+            URL fileUrl = createFileUrlFromPropertiesDir(username + ".lock");
             fw = new FileWriter(fileUrl.getFile());
             fw.write("");
         } catch (IOException ex) {
@@ -172,17 +168,30 @@ public class SecurityContext {
 
     public void unlock(String username) {
        log4jLogger.info("unlock: " + username);
-       URL fileUrl = Context.createFileUrlFromPropertiesDir(username + ".lock");
+       URL fileUrl = createFileUrlFromPropertiesDir(username + ".lock");
        boolean success = (new File(fileUrl.getFile())).delete();
        log4jLogger.info("unlock - success: " + success);
     }
 
     public boolean isLocked(String username) {
-        URL fileUrl = Context.createFileUrlFromPropertiesDir(username + ".lock");
+        URL fileUrl = createFileUrlFromPropertiesDir(username + ".lock");
         File lockFile = new File(fileUrl.getFile());
-        boolean result = lockFile.exists();;
+        boolean result = lockFile.exists();
         log4jLogger.info("isLocked: " + result);
         return result;
+    }
+
+    public static URL createFileUrlFromPropertiesDir(String filename) {
+        File file = new File(System.getProperty("user.dir") + File.separator + "iirkit.properties" + File.separator + filename); //TODO: user project - specific name
+        log4jLogger.info("createFileUrlFromPropertiesDir - file.getPath(): " + file.getPath());
+        URL url = null;
+        try {
+            url = file.toURI().toURL();
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException("SHOULD NEVER HAPPEN");
+        }
+        log4jLogger.info("createFileUrlFromPropertiesDir - url: " + url);
+        return url;
     }
 
     public User getUser() {

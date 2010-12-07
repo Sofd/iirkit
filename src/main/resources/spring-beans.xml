@@ -60,4 +60,6 @@
         <jdbc:script location="classpath:hsql-init.sql"/>
     </jdbc:initialize-database>
 
+    <context:component-scan base-package="de.sofd" />
+
 </beans>

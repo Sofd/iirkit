@@ -4,7 +4,7 @@
  */
 package de.sofd.iirkit;
 
-import SecurityContext.AuthenticationResult;
+import de.sofd.iirkit.SecurityContext.AuthenticationResult;
 import java.awt.Toolkit;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -17,9 +17,12 @@ import org.jdesktop.application.Task;
  */
 public class LoginDialog extends javax.swing.JDialog {
 
+    private SecurityContext securityContext;
+
     /** Creates new form LoginDialog */
-    public LoginDialog(java.awt.Frame parent, boolean modal) {
+    public LoginDialog(SecurityContext securityContext, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
+        this.securityContext = securityContext;
         initComponents();
         this.addWindowListener(new java.awt.event.WindowAdapter() {
 
@@ -35,7 +38,7 @@ public class LoginDialog extends javax.swing.JDialog {
     @Action(block = Task.BlockingScope.ACTION)
     public void okAction() {
         log4jLogger.info("okAction");
-        AuthenticationResult authenticationResult = Context.getSecurityContext().create(usernameField.getText(), new String(passwordField.getPassword()));
+        AuthenticationResult authenticationResult = securityContext.create(usernameField.getText(), new String(passwordField.getPassword()));
         if (!authenticationResult.equals(AuthenticationResult.OK)) {
             if (authenticationResult.equals(AuthenticationResult.LOCKED)) {
                 JOptionPane.showMessageDialog(this, "Account locked. System exit.", "Warning", JOptionPane.WARNING_MESSAGE);
@@ -253,26 +256,6 @@ public class LoginDialog extends javax.swing.JDialog {
         cancelButton.doClick();
     }//GEN-LAST:event_cancelButtonKeyPressed
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            @Override
-            public void run() {
-                LoginDialog dialog = new LoginDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
-        });
-    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel jLabel1;
