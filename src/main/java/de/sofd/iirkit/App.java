@@ -34,6 +34,11 @@ public class App extends SingleFrameApplication {
         loginDialog.setVisible(true);
 
         System.out.println("user=" + secCtx.getUser() + ", authority=" + secCtx.getAuthority());
+
+        SessionControlDialog sessionSelectionDialog = new SessionControlDialog(iirSvc, secCtx, dummyFrame, true);
+        sessionSelectionDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
+        sessionSelectionDialog.setVisible(true);
+
         exit();
     }
 
