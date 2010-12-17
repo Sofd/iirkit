@@ -152,6 +152,13 @@ public class HsqlIirServiceImplTest extends TestCase {
         assertEquals("hc4hp", c.getHangingProtocol());
     }
 
+    public void testNumberOfCases() {
+        System.out.println("numberOfCases");
+        User olaf = svc.getUser("olaf");
+        assertEquals(6, svc.getNumberOfCasesOf(olaf));
+        assertEquals(2, svc.getNumberOfDoneCasesOf(olaf));
+    }
+
     /**
      * Test of update method, of class HsqlIirServiceImpl.
      */

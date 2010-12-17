@@ -79,6 +79,18 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
         return jdbcTemplate.query("select userName, caseNr, hangingProtocol, result from iircase where userName = ?", new CaseRowMapper(), user.getName());
     }
 
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
+    public int getNumberOfCasesOf(User user) {
+        return jdbcTemplate.queryForInt("select count(*) from iircase where userName = ?", user.getName());
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
+    public int getNumberOfDoneCasesOf(User user) {
+        return jdbcTemplate.queryForInt("select count(*) from iircase where userName = ? and not (result='' or result is null)", user.getName());
+    }
+
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     @Override
     public Case getNextCaseOf(User user) {

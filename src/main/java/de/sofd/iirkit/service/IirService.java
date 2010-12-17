@@ -21,6 +21,10 @@ public interface IirService {
 
     Case getNextCaseOf(User user);
 
+    int getNumberOfCasesOf(User user);
+
+    int getNumberOfDoneCasesOf(User user);
+
     User authUser(String name, String password);
 
     User getUser(String name);
