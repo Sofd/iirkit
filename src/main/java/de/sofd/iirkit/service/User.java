@@ -100,6 +100,16 @@ public class User {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        return obj instanceof User && ((User)obj).getName().equals(getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return getName().hashCode();
+    }
+
+    @Override
     public String toString() {
         return "[User: name=" + getName() + ", roles=" + roles + "]";
     }
