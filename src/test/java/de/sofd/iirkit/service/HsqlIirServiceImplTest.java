@@ -32,7 +32,7 @@ public class HsqlIirServiceImplTest extends TestCase {
         svcJdbcTempl = (SimpleJdbcTemplate) ctx.getBean("jdbcTemplate");
         svcJdbcTempl.batchUpdate("insert into user(name,password,roles) values(?,?,?)",
                                  Arrays.asList(new Object[]{"olaf","olafpw","admin"},
-                                               new Object[]{"hans","hanspw","user,admin"}));
+                                               new Object[]{"hans","hanspw","user;admin"}));
         svcJdbcTempl.batchUpdate("insert into iircase(userName, caseNr, hangingProtocol, result) values(?,?,?,?)",
                                  Arrays.asList(new Object[]{"olaf",1,"c1hp","c1res"},
                                                new Object[]{"olaf",2,"c2hp","c2res"},

@@ -27,7 +27,7 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
     protected class UserRowMapper implements RowMapper<User> {
         @Override
         public User mapRow(ResultSet rs, int i) throws SQLException {
-            return new User(rs.getString("name"), rs.getString("password"), rs.getString("roles").split(","));
+            return new User(rs.getString("name"), rs.getString("password"), rs.getString("roles").split(";"));
         }
     }
 
