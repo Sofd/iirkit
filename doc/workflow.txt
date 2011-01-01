@@ -1,0 +1,49 @@
+// -*- java -*-
+
+class BRContext {
+    //created and maintained by framework, passed to BRRunner
+    //holds data about the BR and current state (current case etc.)
+    Case getCurentCase();
+}
+
+class BRFrame extends JFrame {
+    addToToolbar(JComponent c);
+    addToToolbar(Action a);
+
+    get/putAttribute();
+    ...
+}
+
+class BRViewPanel extends JPanel {
+    addToToolbar(JComponent c);
+    addToToolbar(Action a);
+
+    get/putAttribute();
+    ...
+}
+
+
+
+//overall workflow control (OWC) implemented in SessionControlDialog for now.
+
+//one instance only, created by OWC
+//this would eventually be implemented in JS
+class BRRunner {
+    /**
+     * OWC parses number of frames from case.hangingProtocol, creates
+     * one BRFrame object per frame. It calls this method once per
+     * frame and case (and thus multiple times per frame, as frames
+     * may be reused between cases). The method should place and
+     * intialize the frame (not the listViews inside it)
+     */
+    void initializeFrame(BRFrame frame, int frameNo, BRContext brContext);
+
+    void initializeViewPanel(BRViewPanel panel, ListModel/*or ModelFactory+key*/ seriesModel);
+    
+    /**
+     * OWC calls this when it recognizes that the user clicked OK on
+     * the form. formResult already written to
+     * brContext.currentCase.result?
+     */
+    void finishCurrentCase(BRContext brContext, String formResult);
+}
