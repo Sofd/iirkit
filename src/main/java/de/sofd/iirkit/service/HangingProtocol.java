@@ -11,7 +11,7 @@ import java.util.Map;
  * @author olaf
  */
 public class HangingProtocol {
-    private final List<String> seriesUrls = new ArrayList<String>();
+    private final List<SeriesGroup> seriesGroups = new ArrayList<SeriesGroup>();
     private String ecrfUrl;
     private final Map<String, String> attributes = new HashMap<String, String>();
 
@@ -19,13 +19,13 @@ public class HangingProtocol {
         //TODO: regexs don't really work for this? Use a real lexer, maybe from antlr
         for (String namevalue: serialized.split("[^\\];")) {
             int eqIdx = namevalue.indexOf("=");
-            if (eqIdx == -1) {  //if the series URL contains "=", use series=<url> (see below)
-                seriesUrls.add(namevalue);
+            if (eqIdx == -1) {  //if the group base URL contains "=", use series=<url> (see below)
+                seriesGroups.add(new SeriesGroup(namevalue));
             } else {
                 String name = namevalue.substring(0, eqIdx);
                 String value = namevalue.substring(eqIdx + 1);
                 if ("series".equals(name)) {
-                    seriesUrls.add(value);
+                    seriesGroups.add(new SeriesGroup(value));
                 } else if ("ecrf".equals(name)) {
                     ecrfUrl = value;
                 } else {
@@ -35,8 +35,8 @@ public class HangingProtocol {
         }
     }
 
-    public List<String> getSeriesUrls() {
-        return Collections.unmodifiableList(seriesUrls);
+    public List<SeriesGroup> getSeriesGroups() {
+        return Collections.unmodifiableList(seriesGroups);
     }
 
     public String getEcrfUrl() {
