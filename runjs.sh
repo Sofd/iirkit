@@ -1,3 +1,3 @@
 #!/bin/sh
 
-mvn -e exec:java -Dexec.mainClass=org.mozilla.javascript.tools.shell.Main
+java -cp "build/classes:`echo lib/*jar | tr ' ' ':'`" org.mozilla.javascript.tools.shell.Main
