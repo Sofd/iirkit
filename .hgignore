@@ -8,3 +8,4 @@ lib/[^/]*\.jar$
 build/
 nbproject/private/
 dist/
+tmp/
