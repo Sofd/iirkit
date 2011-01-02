@@ -1,7 +1,7 @@
 // -*- java -*-
 
 class BRContext {
-    //created and maintained by framework, passed to BRRunner
+    //created and maintained by framework, passed to BRHandler
     //holds data about the BR and current state (current case etc.)
     Case getCurentCase();
 }
@@ -28,7 +28,7 @@ class BRViewPanel extends JPanel {
 
 //one instance only, created by OWC
 //this would eventually be implemented in JS
-class BRRunner {
+class BRHandler {
     /**
      * OWC parses number of frames from case.hangingProtocol, creates
      * one BRFrame object per frame. It calls this method once per

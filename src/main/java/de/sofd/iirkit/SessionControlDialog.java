@@ -3,16 +3,13 @@ package de.sofd.iirkit;
 import de.sofd.iirkit.service.Case;
 import de.sofd.iirkit.service.IirService;
 import de.sofd.iirkit.service.User;
-import java.awt.Cursor;
 import java.awt.Toolkit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.commons.lang.StringUtils;
@@ -25,12 +22,14 @@ import org.jdesktop.application.Action;
  */
 public class SessionControlDialog extends javax.swing.JDialog {
 
+    private App app;
     private IirService iirService;
     private SecurityContext securityContext;
 
     /** Creates new form SessionSelectionDialog */
-    public SessionControlDialog(IirService iirSvc, SecurityContext securityCtx, java.awt.Frame parent, boolean modal) {
+    public SessionControlDialog(App app, IirService iirSvc, SecurityContext securityCtx, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
+        this.app = app;
         initComponents();
 
         this.iirService = iirSvc;
@@ -73,9 +72,10 @@ public class SessionControlDialog extends javax.swing.JDialog {
                         User selectedUser = (User) listModel.get(lsm.getLeadSelectionIndex());
                         int nCases = iirService.getNumberOfCasesOf(selectedUser);
                         int nDoneCases = iirService.getNumberOfDoneCasesOf(selectedUser);
+                        int nRemainingCases = nCases - nDoneCases;
                         rereadButton.setEnabled(nDoneCases > 0 && selectedUser.equals(securityContext.getUser()));
                         unlockButton.setEnabled(securityContext.isLocked(selectedUser.getName()));
-                        okButton.setEnabled(true);
+                        okButton.setEnabled(nRemainingCases > 0 && selectedUser.equals(securityContext.getUser()));
                         clearButton.setEnabled(false);
                         auditButton.setEnabled(false);
                         logButton.setEnabled(false);
@@ -104,7 +104,43 @@ public class SessionControlDialog extends javax.swing.JDialog {
         } else {
             Toolkit.getDefaultToolkit().beep();
         }
+        JFrame f = new JFrame("tralala");
+        f.setSize(500, 500);
+        f.setVisible(true);
          */
+        setVisible(false);
+        new SessionRunner().runSession();
+    }
+
+    protected class SessionRunner {
+        private CaseRunner caseRunner = new CaseRunner(app);
+        private Case currentCase;
+
+        /**
+         * Run all remaining cases of the logged-in user (securityContext.getUser()),
+         * writing the results to the database.
+         */
+        public void runSession() {
+            User user = securityContext.getUser();
+            currentCase = iirService.getNextCaseOf(user);
+            if (null == currentCase) {
+                caseRunner.disposeFrames();
+                //return; //may send a "finished" event rather than exiting so the program can continue
+                System.exit(0);
+            }
+            caseRunner.addCaseFinishedListener(caseFinishedHandler);
+            caseRunner.startCase(currentCase);
+        }
+
+        private final ChangeListener caseFinishedHandler = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                caseRunner.removeCaseFinishedListener(caseFinishedHandler);
+                iirService.update(currentCase);
+                runSession();
+            }
+        };
+
     }
 
     @Action
