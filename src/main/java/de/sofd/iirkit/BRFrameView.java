@@ -5,6 +5,8 @@ package de.sofd.iirkit;
 
 import java.awt.BorderLayout;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import javax.swing.JPanel;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
@@ -22,6 +24,12 @@ import javax.swing.JToolBar;
  * A BR frame window.
  */
 public class BRFrameView extends FrameView {
+
+    public BRFrameView(App app, int frameNumber) {
+        this(app,
+             GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDefaultConfiguration(),
+             0);
+    }
 
     public BRFrameView(App app, GraphicsConfiguration graphicsConfiguration, int frameNumber) {
 

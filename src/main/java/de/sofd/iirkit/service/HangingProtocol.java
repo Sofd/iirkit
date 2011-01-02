@@ -17,7 +17,7 @@ public class HangingProtocol {
 
     HangingProtocol(String serialized) {
         //TODO: regexs don't really work for this? Use a real lexer, maybe from antlr
-        for (String namevalue: serialized.split("[^\\];")) {
+        for (String namevalue: serialized.split(";")) {   //TODO: use look-ahead group to not match when "\" precedes
             int eqIdx = namevalue.indexOf("=");
             if (eqIdx == -1) {  //if the group base URL contains "=", use series=<url> (see below)
                 seriesGroups.add(new SeriesGroup(namevalue));
