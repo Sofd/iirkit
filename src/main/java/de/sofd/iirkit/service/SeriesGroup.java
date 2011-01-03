@@ -12,8 +12,17 @@ import java.util.List;
  */
 public class SeriesGroup {
     private final List<String> seriesUrls = new ArrayList<String>();
+
     public List<String> getSeriesUrls() {
         return Collections.unmodifiableList(seriesUrls);
+    }
+
+    public int getSeriesUrlsCount() {
+        return seriesUrls.size();
+    }
+
+    public String getSeriesUrl(int i) {
+        return seriesUrls.get(i);
     }
 
     public SeriesGroup(String baseDirName) {

@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridLayout;
 import javax.swing.JPanel;
 import org.jdesktop.application.Action;
 import org.jdesktop.application.ResourceMap;
@@ -14,6 +15,9 @@ import org.jdesktop.application.FrameView;
 import org.jdesktop.application.TaskMonitor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.swing.Timer;
 import javax.swing.Icon;
 import javax.swing.JDialog;
@@ -24,6 +28,8 @@ import javax.swing.JToolBar;
  * A BR frame window.
  */
 public class BRFrameView extends FrameView {
+
+    private final List<BRViewPanel> viewPanels = new ArrayList<BRViewPanel>();
 
     public BRFrameView(App app, int frameNumber) {
         this(app,
@@ -135,6 +141,43 @@ public class BRFrameView extends FrameView {
 
     public JPanel getMainPanel() {
         return mainPanel;
+    }
+
+
+    public int getViewPanelsCount() {
+        return viewPanels.size();
+    }
+
+    public List<BRViewPanel> getViewPanels()  {
+        return Collections.unmodifiableList(viewPanels);
+    }
+
+    public BRViewPanel getViewPanel(int i) {
+        return viewPanels.get(i);
+    }
+
+    void addViewPanel(BRViewPanel p) {
+        viewPanels.add(p);
+    }
+
+    public void setDisplayRange(int firstIdx, int lastIdx) {
+        mainPanel.removeAll();
+        int count = lastIdx - firstIdx + 1;
+        if (count < 6) {
+            //1-row layout
+            mainPanel.setLayout(new GridLayout(1, count, 10, 0));
+        } else {
+            //2-rows layout
+            count = (count / 2) * 2 + (count % 2) * 2;  // next multiple of 2 => we may end up displaying lastIdx + 1
+            int columnCount = count / 2;
+            mainPanel.setLayout(new GridLayout(2, columnCount, 10, 0));
+        }
+
+        for (int i = 0; i < count; i++) {
+            int idx = firstIdx + i;
+            BRViewPanel viewPanel = viewPanels.get(idx);
+            mainPanel.add(viewPanel);
+        }
     }
 
     /** This method is called from within the constructor to

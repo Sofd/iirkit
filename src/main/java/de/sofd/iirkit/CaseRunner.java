@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.AbstractAction;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
@@ -80,7 +81,7 @@ public class CaseRunner implements BRContext {
             SeriesGroup serGrp = hp.getSeriesGroups().get(frameNo);
             BRFrameView frame = frames.get(frameNo);
             brHandler.initializeFrame(frame, frameNo, this);
-            initializeViewPanelsFor(frame, frameNo, serGrp);
+            initializeViewPanelsFor(c, frame, frameNo);
         }
     }
 
@@ -103,8 +104,24 @@ public class CaseRunner implements BRContext {
         brHandler.initializeFormFrame(formFrame, this);
     }
 
-    protected void initializeViewPanelsFor(BRFrameView frame, int frameNo, SeriesGroup serGrp) {
-        
+    protected void initializeViewPanelsFor(Case c, BRFrameView frame, int frameNo) {
+        HangingProtocol hp = c.getHangingProtocolObject();
+        SeriesGroup serGrp = hp.getSeriesGroups().get(frameNo);
+        int i;
+        //create new lists if necessary (we never delete once-created lists, only remove them from the layout)
+        for (i = 0; i < serGrp.getSeriesUrlsCount(); i++) {
+            if (i >= frame.getViewPanelsCount()) {
+                frame.addViewPanel(new BRViewPanel(i));
+            }
+            BRViewPanel vp = frame.getViewPanel(i);
+            String serUrl = serGrp.getSeriesUrl(i);
+            //vp.getListView().setModel(serUrl/*TODO*/);
+        }
+        //reset model in unused lists
+        for (; i < frame.getViewPanelsCount(); i++) {
+            frame.getViewPanel(i).getListView().setModel(new DefaultListModel());
+        }
+        frame.setDisplayRange(0, serGrp.getSeriesUrlsCount() - 1);
     }
 
     public void disposeFrames() {
