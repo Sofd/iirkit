@@ -25,11 +25,13 @@ public class SessionControlDialog extends javax.swing.JDialog {
     private App app;
     private IirService iirService;
     private SecurityContext securityContext;
+    private CaseRunner caseRunner;
 
     /** Creates new form SessionSelectionDialog */
     public SessionControlDialog(App app, IirService iirSvc, SecurityContext securityCtx, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         this.app = app;
+        caseRunner = new CaseRunner(app);
         initComponents();
 
         this.iirService = iirSvc;
@@ -113,7 +115,6 @@ public class SessionControlDialog extends javax.swing.JDialog {
     }
 
     protected class SessionRunner {
-        private CaseRunner caseRunner = new CaseRunner(app);
         private Case currentCase;
 
         /**

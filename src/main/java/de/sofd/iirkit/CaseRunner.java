@@ -3,8 +3,11 @@ package de.sofd.iirkit;
 import de.sofd.iirkit.service.Case;
 import de.sofd.iirkit.service.HangingProtocol;
 import de.sofd.iirkit.service.SeriesGroup;
+import de.sofd.viskit.model.DicomModelFactory;
+import de.sofd.viskit.model.IntuitiveFileNameComparator;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -32,8 +35,10 @@ public class CaseRunner implements BRContext {
 
     private Case currentCase;
     private final List<ChangeListener> caseFinishedListeners = new LinkedList<ChangeListener>();
-    private BRHandler brHandler = new BRHandler();
-    private App app;
+    private final BRHandler brHandler = new BRHandler();
+    private final App app;
+
+    private final DicomModelFactory modelFactory;
 
     //all frames here...
     private final List<BRFrameView> frames = new ArrayList<BRFrameView>();
@@ -41,6 +46,10 @@ public class CaseRunner implements BRContext {
 
     public CaseRunner(App app) {
         this.app = app;
+        modelFactory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+        modelFactory.setSupportMultiframes(false);
+        modelFactory.setCheckFileReadability(false);
+        modelFactory.setAsyncMode(false);
     }
 
     @Override
@@ -115,7 +124,10 @@ public class CaseRunner implements BRContext {
             }
             BRViewPanel vp = frame.getViewPanel(i);
             String serUrl = serGrp.getSeriesUrl(i);
-            //vp.getListView().setModel(serUrl/*TODO*/);
+            if (null == modelFactory.getModel(serUrl)) {
+                modelFactory.addModel(serUrl, new File(serUrl));
+            }
+            vp.getListView().setModel(modelFactory.getModel(serUrl));
         }
         //reset model in unused lists
         for (; i < frame.getViewPanelsCount(); i++) {
