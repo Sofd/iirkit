@@ -30,6 +30,7 @@ import javax.swing.JToolBar;
 public class BRFrameView extends FrameView {
 
     private final List<BRViewPanel> viewPanels = new ArrayList<BRViewPanel>();
+    private List<BRViewPanel> activeViewPanels;
 
     public BRFrameView(App app, int frameNumber) {
         this(app,
@@ -51,6 +52,9 @@ public class BRFrameView extends FrameView {
         mainToolBar = new JToolBar();
         mainToolBar.setFloatable(false);
         mainPanel.add(mainToolBar, BorderLayout.PAGE_START);
+
+        listsPanel = new JPanel();
+        mainPanel.add(listsPanel, BorderLayout.CENTER);
 
         // status bar initialization - message timeout, idle icon and busy animation, etc
         ResourceMap resourceMap = getResourceMap();
@@ -143,6 +147,9 @@ public class BRFrameView extends FrameView {
         return mainPanel;
     }
 
+    public JPanel getListsPanel() {
+        return listsPanel;
+    }
 
     public int getViewPanelsCount() {
         return viewPanels.size();
@@ -160,23 +167,32 @@ public class BRFrameView extends FrameView {
         viewPanels.add(p);
     }
 
+    void setActiveViewPanelsCount(int count) {
+        assert(count <= viewPanels.size());
+        activeViewPanels = Collections.unmodifiableList(viewPanels.subList(0, count));
+    }
+
+    public List<BRViewPanel> getActiveViewPanels() {
+        return Collections.unmodifiableList(activeViewPanels);
+    }
+
     public void setDisplayRange(int firstIdx, int lastIdx) {
-        mainPanel.removeAll();
+        listsPanel.removeAll();
         int count = lastIdx - firstIdx + 1;
         if (count < 6) {
             //1-row layout
-            mainPanel.setLayout(new GridLayout(1, count, 10, 0));
+            listsPanel.setLayout(new GridLayout(1, count, 10, 0));
         } else {
             //2-rows layout
             count = (count / 2) * 2 + (count % 2) * 2;  // next multiple of 2 => we may end up displaying lastIdx + 1
             int columnCount = count / 2;
-            mainPanel.setLayout(new GridLayout(2, columnCount, 10, 0));
+            listsPanel.setLayout(new GridLayout(2, columnCount, 10, 0));
         }
 
         for (int i = 0; i < count; i++) {
             int idx = firstIdx + i;
             BRViewPanel viewPanel = viewPanels.get(idx);
-            mainPanel.add(viewPanel);
+            listsPanel.add(viewPanel);
         }
     }
 
@@ -300,5 +316,6 @@ public class BRFrameView extends FrameView {
     final javax.swing.ActionMap finalActionMap = org.jdesktop.application.Application.getInstance(App.class).getContext().getActionMap(BRFrameView.class, this);
     final BRFrameView finalThis = this;
     protected JToolBar mainToolBar;
+    protected JPanel listsPanel;
     boolean dummyActionTaskdoInBackground = false;
 }

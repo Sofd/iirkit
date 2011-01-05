@@ -22,6 +22,7 @@ import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
 import de.sofd.viskit.controllers.ImageListViewMouseMeasurementController;
 import de.sofd.viskit.model.DicomImageListViewModelElement;
 import de.sofd.viskit.model.ImageListViewModelElement;
+import de.sofd.viskit.ui.imagelist.ImageListView;
 import de.sofd.viskit.util.DicomUtil;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -340,7 +341,7 @@ public class BRViewPanel extends JPanel {
         this.parentFrameView = parentFrameView;
     }
 
-    public JImageListView getListView() {
+    public ImageListView getListView() {
         return listView;
     }
 

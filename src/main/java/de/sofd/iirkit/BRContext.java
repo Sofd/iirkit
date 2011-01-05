@@ -1,6 +1,7 @@
 package de.sofd.iirkit;
 
 import de.sofd.iirkit.service.Case;
+import java.util.List;
 
 /**
  *
@@ -8,4 +9,5 @@ import de.sofd.iirkit.service.Case;
  */
 public interface BRContext {
     Case getCurrentCase();
+    List<BRFrameView> getCurrentCaseFrames();
 }

@@ -9,6 +9,7 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -57,11 +58,18 @@ public class CaseRunner implements BRContext {
         return currentCase;
     }
 
+    @Override
+    public List<BRFrameView> getCurrentCaseFrames() {
+        return Collections.unmodifiableList(frames);
+    }
+
     public void startCase(Case c) {
         logger.info("starting case: " + c);
         currentCase = c;
+        brHandler.caseStarting(this);
         initializeFramesFor(c);
         initializeFormFrameFor(c);
+        brHandler.caseStartingPostFrameInitialization(this);
     }
 
     protected void initializeFramesFor(Case c) {
@@ -104,6 +112,7 @@ public class CaseRunner implements BRContext {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     currentCase.setResult("result " + new Date());
+                    brHandler.caseFinished(CaseRunner.this);
                     fireCaseFinished();
                 }
             }), BorderLayout.SOUTH);
@@ -134,6 +143,7 @@ public class CaseRunner implements BRContext {
             frame.getViewPanel(i).getListView().setModel(new DefaultListModel());
         }
         frame.setDisplayRange(0, serGrp.getSeriesUrlsCount() - 1);
+        frame.setActiveViewPanelsCount(serGrp.getSeriesUrlsCount());
     }
 
     public void disposeFrames() {
