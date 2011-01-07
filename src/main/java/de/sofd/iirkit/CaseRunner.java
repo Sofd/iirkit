@@ -43,10 +43,11 @@ public class CaseRunner implements BRContext {
 
     //all frames here...
     private final List<BRFrameView> frames = new ArrayList<BRFrameView>();
-    private JFrame formFrame;
+    private final FormRunner formRunner;
 
     public CaseRunner(App app) {
         this.app = app;
+        formRunner = new FormRunner(app);
         modelFactory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
         modelFactory.setSupportMultiframes(false);
         modelFactory.setCheckFileReadability(false);
@@ -103,23 +104,17 @@ public class CaseRunner implements BRContext {
     }
 
     protected void initializeFormFrameFor(Case c) {
-        if (formFrame == null) {
-            formFrame = new JFrame("ECRF");
-            formFrame.getContentPane().setLayout(new BorderLayout());
-            JTextArea txt = new JTextArea();
-            formFrame.getContentPane().add(txt, BorderLayout.CENTER);
-            formFrame.getContentPane().add(new JButton(new AbstractAction("OK") {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    currentCase.setResult("result " + new Date());
-                    brHandler.caseFinished(CaseRunner.this);
-                    fireCaseFinished();
-                }
-            }), BorderLayout.SOUTH);
-            formFrame.setSize(600, 600);
-            app.show(formFrame);
-        }
-        brHandler.initializeFormFrame(formFrame, this);
+        formRunner.start(c.getHangingProtocolObject().getEcrfUrl());
+        formRunner.addFinishedListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                formRunner.removeFinishedListener(this);
+                currentCase.setResult(formRunner.getLastFormResult());
+                brHandler.caseFinished(CaseRunner.this);
+                fireCaseFinished();
+            }
+        });
+        brHandler.initializeFormFrame(formRunner.getFormFrame(), this);
     }
 
     protected void initializeViewPanelsFor(Case c, BRFrameView frame, int frameNo) {
@@ -151,8 +146,7 @@ public class CaseRunner implements BRContext {
             frame.getFrame().dispose();
         }
         frames.clear();
-        formFrame.dispose();
-        formFrame = null;
+        formRunner.disposeFrame();
     }
 
     //eventually there may be multiple kinds of finishings (e.g. ended, cancelled...)
