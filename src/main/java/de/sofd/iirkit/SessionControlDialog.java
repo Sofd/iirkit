@@ -125,6 +125,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
             if (null == currentCase) {
                 caseRunner.disposeFrames();
                 //return; //may send a "finished" event rather than exiting so the program can continue
+                FormRunner.dispose();
                 System.out.println("DONE!");
                 System.exit(0);
             }
@@ -133,6 +134,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
                 public void stateChanged(ChangeEvent e) {
                     caseRunner.removeCaseFinishedListener(this);
                     iirService.update(currentCase);
+                    System.err.println("Case updated with result: " + currentCase.getResult());
                     runSession();
                 }
             });

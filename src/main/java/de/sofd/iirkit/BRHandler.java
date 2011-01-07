@@ -50,8 +50,8 @@ class BRHandler {
         frame.getFrame().setSize(800, 600);
     }
 
-    void initializeFormFrame(JFrame formFrame, BRContext brContext) {
-        formFrame.setSize(600, 600);
+    void initializeFormFrame(HelloWebKit formFrame, BRContext brContext) {
+        //formFrame.setSize(600, 600);
     }
 
     void initializeViewPanel(BRViewPanel panel, ListModel/*or ModelFactory+key?*/ seriesModel) {

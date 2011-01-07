@@ -1,14 +1,11 @@
 package de.sofd.iirkit;
 
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
+import com.trolltech.qt.core.QCoreApplication;
+import com.trolltech.qt.gui.QApplication;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import javax.swing.AbstractAction;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -20,37 +17,70 @@ public class FormRunner {
 
     private boolean isRunning = false;
     private final List<ChangeListener> finishedListeners = new ArrayList<ChangeListener>(); //TODO: use specific event + listener class
-    private JFrame formFrame;
+    private HelloWebKit formFrame;
     private String lastFormResult;
     private final App app;
 
+    /**
+     * There's only one QT thread that runs continuously and is shared
+     * by all FormRunners (until FormRunner.dispose()). All FormRunners
+     * (if there is more than one) run their QT UI in this thread.
+     */
+    private static Thread qtThread = new Thread() {
+
+        @Override
+        public void run() {
+            QApplication.initialize(new String[0]);
+            QApplication.setQuitOnLastWindowClosed(false);
+            QApplication.exec();
+            System.err.println("QT thread finished.");
+        }
+
+    };
+
     public FormRunner(App app) {
         this.app = app;
+        if (!qtThread.isAlive()) {
+            qtThread.start();
+        }
     }
 
     public void start(String url) {
         if (isRunning) {
             throw new IllegalStateException("FormRunner already running");
         }
-        formFrame = new JFrame("ECRF");
-        formFrame.getContentPane().setLayout(new BorderLayout());
-        JTextArea txt = new JTextArea();
-        formFrame.getContentPane().add(txt, BorderLayout.CENTER);
-        formFrame.getContentPane().add(new JButton(new AbstractAction("OK") {
+        QApplication.invokeLater(new Runnable() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                lastFormResult = "result " + new Date();
-                stop();
-                fireFinished();
+            public void run() {
+                formFrame = new HelloWebKit();
+                formFrame.setMainWindowCloseCallback(new Runnable() {
+                    @Override
+                    public void run() {
+                        formFrame.setMainWindowCloseCallback(null);
+                        try {
+                            SwingUtilities.invokeAndWait(new Runnable() {
+
+                                @Override
+                                public void run() {
+                                    lastFormResult = "result " + new Date();
+                                    System.err.println("Form result created: " + lastFormResult);
+                                    stop();
+                                    fireFinished();
+                                }
+                            });
+                        } catch (Exception ex) {
+                            throw new RuntimeException("qt invocation failed: " + ex.getLocalizedMessage(), ex);
+                        }
+                    }
+                });
+                formFrame.show();
             }
-        }), BorderLayout.SOUTH);
-        formFrame.setSize(600, 600);
-        app.show(formFrame);
+        });
 
         isRunning = true;
     }
 
-    public JFrame getFormFrame() {
+    public HelloWebKit getFormFrame() {
         return formFrame;
     }
 
@@ -81,11 +111,33 @@ public class FormRunner {
     }
 
     protected void stop() {
+        //QApplication.invokeAndWait would probably lead to a deadlock when stop()
+        //is called from a Swing.invokeAndWait(). Might invokeLater() in theory
+        //cause a race condition?
+        QApplication.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                formFrame.close();
+            }
+        });
         if (!isRunning) {
             throw new IllegalStateException("FormRunner not running");
         }
-        formFrame.dispose();
+        //formFrame.dispose();
         isRunning = false;
+    }
+
+    /**
+     * MUST be called when the FormRunner class is no longer used (generally
+     * at the end of the application's lifetime).
+     */
+    public static void dispose() {
+        QApplication.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                QCoreApplication.exit(0);
+            }
+        });
     }
 
 }
