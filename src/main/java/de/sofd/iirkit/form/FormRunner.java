@@ -11,6 +11,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
+ * Usage: Create a FormRunner, register an event listener that is called when
+ * the runner is finished, call FormRunner#start(formUrl).
+ * <p>
+ * The runner normally finishes when the user has submitted the form (in which
+ * case the form result will be in {@link #getLastFormResult() }), or has
+ * canceled the runner (normally by closing the form window without submitting
+ * the form). The runner may also be finished externally by calling #stop().
+ *
  *
  * @author olaf
  */
@@ -126,6 +134,7 @@ public class FormRunner {
         }
         //formFrame.dispose();
         isRunning = false;
+        //TODO: fireFinished() unless our caller already did
     }
 
     /**
