@@ -18,7 +18,7 @@ public class FormRunner {
 
     private boolean isRunning = false;
     private final List<ChangeListener> finishedListeners = new ArrayList<ChangeListener>(); //TODO: use specific event + listener class
-    private HelloWebKit formFrame;
+    private FormFrame formFrame;
     private String lastFormResult;
     private final App app;
 
@@ -53,7 +53,7 @@ public class FormRunner {
         QApplication.invokeLater(new Runnable() {
             @Override
             public void run() {
-                formFrame = new HelloWebKit();
+                formFrame = new FormFrame();
                 formFrame.setMainWindowCloseCallback(new Runnable() {
                     @Override
                     public void run() {
@@ -81,7 +81,7 @@ public class FormRunner {
         isRunning = true;
     }
 
-    public HelloWebKit getFormFrame() {
+    public FormFrame getFormFrame() {
         return formFrame;
     }
 

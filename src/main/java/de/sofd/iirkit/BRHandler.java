@@ -1,6 +1,6 @@
 package de.sofd.iirkit;
 
-import de.sofd.iirkit.form.HelloWebKit;
+import de.sofd.iirkit.form.FormFrame;
 import de.sofd.iirkit.service.SeriesGroup;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController;
@@ -51,7 +51,7 @@ class BRHandler {
         frame.getFrame().setSize(800, 600);
     }
 
-    void initializeFormFrame(HelloWebKit formFrame, BRContext brContext) {
+    void initializeFormFrame(FormFrame formFrame, BRContext brContext) {
         //formFrame.setSize(600, 600);
     }
 
