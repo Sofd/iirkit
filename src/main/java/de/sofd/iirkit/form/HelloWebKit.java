@@ -1,4 +1,4 @@
-package de.sofd.iirkit;
+package de.sofd.iirkit.form;
 
 import com.trolltech.qt.core.QUrl;
 import com.trolltech.qt.gui.QAction;

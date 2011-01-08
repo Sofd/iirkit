@@ -1,7 +1,8 @@
-package de.sofd.iirkit;
+package de.sofd.iirkit.form;
 
 import com.trolltech.qt.core.QCoreApplication;
 import com.trolltech.qt.gui.QApplication;
+import de.sofd.iirkit.App;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
