@@ -1,11 +1,7 @@
-/*
- * HieronymusR312046View.java
- */
 package de.sofd.iirkit;
 
 import java.awt.BorderLayout;
 import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import javax.swing.JPanel;
@@ -17,7 +13,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.swing.Timer;
 import javax.swing.Icon;
 import javax.swing.JDialog;
@@ -31,6 +30,7 @@ public class BRFrameView extends FrameView {
 
     private final List<BRViewPanel> viewPanels = new ArrayList<BRViewPanel>();
     private List<BRViewPanel> activeViewPanels;
+    private final Map<String, Object> attributes = new HashMap<String, Object>();
 
     public BRFrameView(App app, int frameNumber) {
         this(app,
@@ -194,6 +194,26 @@ public class BRFrameView extends FrameView {
             BRViewPanel viewPanel = viewPanels.get(idx);
             listsPanel.add(viewPanel);
         }
+    }
+
+    public Map<String, Object> getAttributes() {
+        return Collections.unmodifiableMap(attributes);
+    }
+
+    public Set<String> getAttributeNames() {
+        return attributes.keySet();
+    }
+
+    public Object getAttribute(String name) {
+        return attributes.get(name);
+    }
+
+    public Object putAttribute(String name, Object value) {
+        return attributes.put(name, value);
+    }
+
+    public Object removeAttribute(String name) {
+        return attributes.remove(name);
     }
 
     /** This method is called from within the constructor to

@@ -27,6 +27,10 @@ import de.sofd.viskit.util.DicomUtil;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseListener;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JCheckBox;
@@ -62,6 +66,7 @@ public class BRViewPanel extends JPanel {
     private int panelIdx;
     private BRFrameView parentFrameView;
     private boolean enlarged = false;
+    private final Map<String, Object> attributes = new HashMap<String, Object>();
 
     private void setWindowingToOptimal(ImageListViewCell cell) {
         FloatRange usedRange = cell.getDisplayedModelElement().getImage().getUsedPixelValuesRange();
@@ -388,6 +393,26 @@ public class BRViewPanel extends JPanel {
                 listView.setScaleMode(new JGLImageListView.MyScaleMode(1, 1));
             }
         }
+    }
+
+    public Map<String, Object> getAttributes() {
+        return Collections.unmodifiableMap(attributes);
+    }
+
+    public Set<String> getAttributeNames() {
+        return attributes.keySet();
+    }
+
+    public Object getAttribute(String name) {
+        return attributes.get(name);
+    }
+
+    public Object putAttribute(String name, Object value) {
+        return attributes.put(name, value);
+    }
+
+    public Object removeAttribute(String name) {
+        return attributes.remove(name);
     }
 
 }
