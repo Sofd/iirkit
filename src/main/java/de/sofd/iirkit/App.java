@@ -4,6 +4,7 @@ import de.sofd.iirkit.service.IirService;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import javax.swing.JFrame;
+import org.apache.log4j.Logger;
 import org.jdesktop.application.SingleFrameApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -11,12 +12,17 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App extends SingleFrameApplication {
 
+    static final Logger logger = Logger.getLogger(SingleFrameApplication.class);
+
     /**
      * At startup create and show the main frame of the application.
      */
     @Override protected void startup() {
-        System.out.println( "Hello World!" );
+        logger.info( "startup" );
         //org.mozilla.javascript.tools.shell.Main.main(new String[0]);
+
+        System.setProperty("sun.awt.exception.handler", AwtExceptionHandler.class.getName());
+        //TODO: QT thread exception handler?
 
         ApplicationContext ctx = new ClassPathXmlApplicationContext("/spring-beans.xml");
         IirService iirSvc = (IirService) ctx.getBean("iirService");
