@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  * Usage: Create a FormRunner, register an event listener that is called when
@@ -25,9 +23,8 @@ import javax.swing.event.ChangeListener;
 public class FormRunner {
 
     private boolean isRunning = false;
-    private final List<ChangeListener> finishedListeners = new ArrayList<ChangeListener>(); //TODO: use specific event + listener class
+    private final List<FormDoneListener> finishedListeners = new ArrayList<FormDoneListener>();
     private FormFrame formFrame;
-    private String lastFormResult;
     private final App app;
 
     /**
@@ -54,27 +51,26 @@ public class FormRunner {
         }
     }
 
-    public void start(String url) {
+    public void start(final String url) {
         if (isRunning) {
             throw new IllegalStateException("FormRunner already running");
         }
         QApplication.invokeLater(new Runnable() {
             @Override
             public void run() {
-                formFrame = new FormFrame();
-                formFrame.setMainWindowCloseCallback(new Runnable() {
+                formFrame = new FormFrame(url);
+                formFrame.setFormDoneCallback(new Runnable() {
                     @Override
                     public void run() {
-                        formFrame.setMainWindowCloseCallback(null);
+                        final FormDoneEvent formDoneEvent = formFrame.getFormDoneEvent();
+                        formFrame.setFormDoneCallback(null);
                         try {
                             SwingUtilities.invokeAndWait(new Runnable() {
 
                                 @Override
                                 public void run() {
-                                    lastFormResult = "result " + new Date();
-                                    System.err.println("Form result created: " + lastFormResult);
                                     stop();
-                                    fireFinished();
+                                    fireFinished(formDoneEvent);
                                 }
                             });
                         } catch (Exception ex) {
@@ -93,22 +89,22 @@ public class FormRunner {
         return formFrame;
     }
 
-    public void addFinishedListener(ChangeListener l) {
+    public void addFormDoneListener(FormDoneListener l) {
         finishedListeners.add(l);
     }
 
-    public void removeFinishedListener(ChangeListener l) {
+    public void removeFormDoneListener(FormDoneListener l) {
         finishedListeners.remove(l);
     }
 
-    protected void fireFinished() {
-        for (ChangeListener l : finishedListeners.toArray(new ChangeListener[0])) {
-            l.stateChanged(new ChangeEvent(this));
+    protected void fireFinished(FormDoneEvent evt) {
+        for (FormDoneListener l : finishedListeners.toArray(new FormDoneListener[0])) {
+            if (evt.isFormSubmitted()) {
+                l.formSubmitted(evt);
+            } else {
+                l.formCancelled(evt);
+            }
         }
-    }
-
-    public String getLastFormResult() {
-        return lastFormResult;
     }
 
     public void disposeFrame() {

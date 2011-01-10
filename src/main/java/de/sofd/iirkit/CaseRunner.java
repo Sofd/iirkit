@@ -1,24 +1,19 @@
 package de.sofd.iirkit;
 
+import de.sofd.iirkit.form.FormDoneEvent;
+import de.sofd.iirkit.form.FormDoneListener;
 import de.sofd.iirkit.form.FormRunner;
 import de.sofd.iirkit.service.Case;
 import de.sofd.iirkit.service.HangingProtocol;
 import de.sofd.iirkit.service.SeriesGroup;
 import de.sofd.viskit.model.DicomModelFactory;
 import de.sofd.viskit.model.IntuitiveFileNameComparator;
-import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JTextArea;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.log4j.Logger;
@@ -36,7 +31,7 @@ public class CaseRunner implements BRContext {
     static final Logger logger = Logger.getLogger(CaseRunner.class);
 
     private Case currentCase;
-    private final List<ChangeListener> caseFinishedListeners = new LinkedList<ChangeListener>();
+    private final List<ChangeListener> caseFinishedListeners = new LinkedList<ChangeListener>(); //TODO: specific "CaseDoneEvent"
     private final BRHandler brHandler = new BRHandler();
     private final App app;
 
@@ -106,13 +101,20 @@ public class CaseRunner implements BRContext {
 
     protected void initializeFormFrameFor(Case c) {
         formRunner.start(c.getHangingProtocolObject().getEcrfUrl());
-        formRunner.addFinishedListener(new ChangeListener() {
+        formRunner.addFormDoneListener(new FormDoneListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
-                formRunner.removeFinishedListener(this);
-                currentCase.setResult(formRunner.getLastFormResult());
+            public void formSubmitted(FormDoneEvent event) {
+                formRunner.removeFormDoneListener(this);
+                currentCase.setResult(event.getFormResult());
                 brHandler.caseFinished(CaseRunner.this);
                 fireCaseFinished();
+            }
+
+            @Override
+            public void formCancelled(FormDoneEvent event) {
+                formRunner.removeFormDoneListener(this);
+                //TODO: send specific CaseDoneEvent or similar indicating the case was cancelled
+                System.exit(0);
             }
         });
         brHandler.initializeFormFrame(formRunner.getFormFrame(), this);

@@ -1,5 +1,6 @@
 package de.sofd.iirkit.form;
 
+import com.trolltech.qt.QPair;
 import com.trolltech.qt.core.QUrl;
 import com.trolltech.qt.gui.QAction;
 import com.trolltech.qt.gui.QApplication;
@@ -7,90 +8,141 @@ import com.trolltech.qt.gui.QCloseEvent;
 import com.trolltech.qt.gui.QMainWindow;
 import com.trolltech.qt.gui.QToolBar;
 import com.trolltech.qt.gui.QWidget;
+import com.trolltech.qt.network.QNetworkRequest;
+import com.trolltech.qt.webkit.QWebFrame;
+import com.trolltech.qt.webkit.QWebPage;
 import com.trolltech.qt.webkit.QWebView;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author olaf
  */
-public class FormFrame extends QMainWindow {
-    private QWebView browser;
+ public class FormFrame extends QMainWindow {
+    static final Logger logger = Logger.getLogger(FormFrame.class);
 
+    private QWebView webView;
     private QAction forward;
     private QAction backward;
     private QAction reload;
     private QAction stop;
+    private FormDoneEvent formDoneEvent;
 
-    public FormFrame() {
-        this(null);
+    public FormFrame(String url) {
+        this(null, url);
     }
 
-    public FormFrame(QWidget parent) {
+    public FormFrame(QWidget parent, final String url) {
         super(parent);
 
-        browser = new QWebView();
+        webView = new QWebView();
+        webView.setPage(new EcrfSubmitHandlingWebPage());
+        //webView.page().setLinkDelegationPolicy(LinkDelegationPolicy.DelegateAllLinks);
 
         QToolBar toolbar = addToolBar("Actions");
-        backward = toolbar.addAction("Backward");
-        forward = toolbar.addAction("Forward");
+        backward = toolbar.addAction("<");
+        forward = toolbar.addAction(">");
         reload = toolbar.addAction("Reload");
         stop = toolbar.addAction("Stop");
         toolbar.setFloatable(false);
         toolbar.setMovable(false);
 
-        setCentralWidget(browser);
+        setCentralWidget(webView);
         statusBar().show();
 
         setWindowTitle("eCRF");
         //setWindowIcon(new QIcon("classpath:com/trolltech/images/qt-logo.png"));
 
-        browser.loadProgress.connect(this, "loadProgress(int)");
-        browser.loadFinished.connect(this, "loadDone()");
-        browser.urlChanged.connect(this, "urlChanged(QUrl)");
+        //webView.loadStarted.connect(this, "loadStarted()");
+        webView.loadProgress.connect(this, "loadProgress(int)");
+        webView.loadFinished.connect(this, "loadDone()");
+        //webView.linkClicked.connect(this, "linkClicked(QUrl)");
+        //webView.page().linkClicked.connect(this, "linkClicked(QUrl)");
+        //webView.urlChanged.connect(this, "urlChanged(QUrl)");
 
-        forward.triggered.connect(browser, "forward()");
-        backward.triggered.connect(browser, "back()");
-        reload.triggered.connect(browser, "reload()");
-        stop.triggered.connect(browser, "stop()");
+        forward.triggered.connect(webView, "forward()");
+        backward.triggered.connect(webView, "back()");
+        reload.triggered.connect(webView, "reload()");
+        stop.triggered.connect(webView, "stop()");
 
         QApplication.invokeLater(new Runnable() {
+            @Override
             public void run() {
-                browser.load(new QUrl("http://www.google.de"));
+                webView.load(new QUrl(url));
             }
         });
     }
 
-    public void urlChanged(QUrl url) {
-        System.out.println("URL changed to: " + url.toString());
+    private class EcrfSubmitHandlingWebPage extends QWebPage {
+
+        private boolean pathIsEcrfSubmit(String path) {
+            String lastElt = path;
+            int lastSlash = path.lastIndexOf("/");
+            if (-1 != lastSlash) {
+                lastElt = path.substring(1 + lastSlash);
+            }
+            return "submit_ecrf".equals(lastElt);
+        }
+
+        @Override
+        protected boolean acceptNavigationRequest(QWebFrame frame, QNetworkRequest request, NavigationType type) {
+            if (type == NavigationType.NavigationTypeFormSubmitted && pathIsEcrfSubmit(request.url().path())) {
+                logger.debug("form submitted: " + request.url());
+                Map<String,String> requestParams = null;
+                if (request.url().hasQuery()) {
+                    requestParams = new HashMap<String, String>();
+                    System.out.println("  query items:");
+                    for (QPair<String,String> item : request.url().queryItems()) {
+                        requestParams.put(item.first, item.second);
+                    }
+                }
+                formDoneEvent = new FormDoneEvent(request.url().toString(), requestParams);  //"formSubmitted" event
+                if (null != formDoneCallback) {
+                    formDoneCallback.run();
+                }
+
+                return false;
+            } else {
+                return super.acceptNavigationRequest(frame, request, type);
+            }
+        }
+
     }
 
-    public void loadDone() {
-        statusBar().showMessage("Loaded.");
-    }
-
-    public void loadProgress(int x) {
+    private void loadProgress(int x) {
         statusBar().showMessage("Loading: " + x + " %");
     }
 
-    private Runnable windowCloseCallback;
+    private void loadDone() {
+        statusBar().showMessage("Loaded.");
+    }
+
+    private Runnable formDoneCallback;
 
     @Override
     protected void closeEvent(QCloseEvent event) {
-        browser.loadProgress.disconnect(this);
-        browser.loadFinished.disconnect(this);
-        if (null != windowCloseCallback) {
-            windowCloseCallback.run();
+        webView.loadProgress.disconnect(this);
+        webView.loadFinished.disconnect(this);
+        formDoneEvent = new FormDoneEvent();  //"cancelled" event
+        if (null != formDoneCallback) {
+            formDoneCallback.run();
         }
     }
 
-    public void setMainWindowCloseCallback(Runnable r) {
-        windowCloseCallback = r;
+    public void setFormDoneCallback(Runnable r) {
+        formDoneCallback = r;
+    }
+
+    public FormDoneEvent getFormDoneEvent() {
+        return formDoneEvent;
     }
 
     public static void main(String args[]) {
         QApplication.initialize(args);
 
-        FormFrame widget = new FormFrame();
+        FormFrame widget = new FormFrame("/home/olaf/hieronymusr/iirkit-test/ecrf/312046_11.html");
         widget.show();
 
         QApplication.exec();
