@@ -9,7 +9,14 @@ public class Case {
     protected int number;
     protected User user;
     protected String hangingProtocol;
+    protected HangingProtocol hpObject;
     protected String result;
+
+    public Case(int number, String hangingProtocol, String result) {
+        this.number = number;
+        this.hangingProtocol = hangingProtocol;
+        this.result = result;
+    }
 
     /**
      * Get the value of result
@@ -45,6 +52,23 @@ public class Case {
      */
     public void setHangingProtocol(String hangingProtocol) {
         this.hangingProtocol = hangingProtocol;
+        this.hpObject = null;
+    }
+
+    /**
+     * The hanging protocol in parsed-out representation.
+     *
+     * Name chosen for backward compatibility; should be named
+     * getHangingProptocol eventually. The string representation
+     * (database field) shouldn't be exposed in the public API, really
+     *
+     * @return
+     */
+    public HangingProtocol getHangingProtocolObject() {
+        if (null == hpObject) {
+            hpObject = new HangingProtocol(getHangingProtocol());
+        }
+        return hpObject;
     }
 
     /**
@@ -81,6 +105,11 @@ public class Case {
      */
     public void setUser(User user) {
         this.user = user;
+    }
+
+    @Override
+    public String toString() {
+        return "[Case: nr=" + getNumber() + ", hp=" + getHangingProtocol() + ", res=" + getResult() + "]";
     }
 
 }

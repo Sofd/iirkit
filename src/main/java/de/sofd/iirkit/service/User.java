@@ -1,9 +1,10 @@
 package de.sofd.iirkit.service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 
 /**
  *
@@ -13,18 +14,22 @@ public class User {
 
     protected String name;
     protected String password;
-    protected Collection<String> roles;
+    protected List<String> roles;
+
+    public static final String ROLE_USER = "user";
+    public static final String ROLE_READER = "reader";
+    public static final String ROLE_ADMIN = "admin";
 
     public User(String name, String password, Collection<String> roles) {
         this.name = name;
         this.password = password;
-        this.roles = roles;
+        this.roles = checkRoles(new ArrayList<String>(roles));
     }
 
     public User(String name, String password, String[] roles) {
         this.name = name;
         this.password = password;
-        this.roles = Arrays.asList(roles);
+        this.roles = checkRoles(Arrays.asList(roles));
     }
 
     /**
@@ -68,8 +73,12 @@ public class User {
      *
      * @return the value of roles
      */
-    public Collection<String> getRoles() {
-        return Collections.unmodifiableCollection(roles);
+    public List<String> getRoles() {
+        return Collections.unmodifiableList(roles);
+    }
+
+    public boolean hasRole(String r) {
+        return getRoles().contains(r);
     }
 
     /**
@@ -78,7 +87,26 @@ public class User {
      * @param roles new value of roles
      */
     public void setRoles(Collection<String> roles) {
-        this.roles = new HashSet<String>(roles);
+        this.roles = checkRoles(new ArrayList<String>(roles));
+    }
+
+    protected final List<String> checkRoles(List<String> roles) {
+        for (String r : roles) {
+            if (!r.equals(ROLE_USER) && !r.equals(ROLE_READER) && !r.equals(ROLE_ADMIN)) {
+                throw new IllegalArgumentException("unknown role: " + r);
+            }
+        }
+        return roles;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof User && ((User)obj).getName().equals(getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return getName().hashCode();
     }
 
     @Override
