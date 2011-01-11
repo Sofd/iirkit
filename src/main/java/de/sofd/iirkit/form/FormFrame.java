@@ -12,8 +12,10 @@ import com.trolltech.qt.network.QNetworkRequest;
 import com.trolltech.qt.webkit.QWebFrame;
 import com.trolltech.qt.webkit.QWebPage;
 import com.trolltech.qt.webkit.QWebView;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
@@ -29,6 +31,7 @@ import org.apache.log4j.Logger;
     private QAction reload;
     private QAction stop;
     private FormDoneEvent formDoneEvent;
+    private final Map<String, Object> attributes = new HashMap<String, Object>();
 
     public FormFrame(String url) {
         this(null, url);
@@ -137,6 +140,26 @@ import org.apache.log4j.Logger;
 
     public FormDoneEvent getFormDoneEvent() {
         return formDoneEvent;
+    }
+
+    public Map<String, Object> getAttributes() {
+        return Collections.unmodifiableMap(attributes);
+    }
+
+    public Set<String> getAttributeNames() {
+        return attributes.keySet();
+    }
+
+    public Object getAttribute(String name) {
+        return attributes.get(name);
+    }
+
+    public Object putAttribute(String name, Object value) {
+        return attributes.put(name, value);
+    }
+
+    public Object removeAttribute(String name) {
+        return attributes.remove(name);
     }
 
     public static void main(String args[]) {

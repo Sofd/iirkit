@@ -28,6 +28,9 @@ import de.sofd.viskit.util.DicomUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import static de.sofd.viskit.util.DicomUtil.PatientBasedMainAxisOrientation;
@@ -40,6 +43,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
+import javax.swing.WindowConstants;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
@@ -86,6 +90,29 @@ class BRHandler {
     void caseStarting(BRContext brContext) {
     }
 
+    // default frame geometry autoconfiguration. Will work for multiple displays
+    // arranged horizontally. For anything more exotic, roll your own.
+
+    GraphicsDevice[] screens;
+
+    private synchronized GraphicsDevice[] getScreens() {
+        if (null == screens) {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            screens = ge.getScreenDevices();
+            /*
+            int nScreens = 0;
+            for (int j = 0; j < screens.length; j++) {
+                GraphicsDevice gd = screens[j];
+                GraphicsConfiguration[] gc = gd.getConfigurations();
+                //for (int i = 0; i < gc.length; i++) {
+                nScreens++;
+                //}
+            }
+             */
+        }
+        return screens;
+    }
+
     /**
      * Called once per
      * frame and case (and thus potentially multiple times per frame, as frames
@@ -93,11 +120,43 @@ class BRHandler {
      * intialize the frame (not the view panels/listViews inside it)
      */
     void initializeFrame(BRFrameView frame, int frameNo, BRContext brContext) {
-        frame.getFrame().setSize(800, 600);
+        if (null != frame.getAttribute("isInitialized")) {
+            return;
+        }
+
+        int nFrames = brContext.getCurrentCase().getHangingProtocolObject().getSeriesGroups().size();
+        GraphicsDevice[] gs = getScreens();
+        int nScreens = gs.length;
+        if (nFrames <= nScreens) {
+            // frame n on screen n
+            frame.getFrame().setBounds(gs[frameNo].getDefaultConfiguration().getBounds());
+        } else {
+            //frames horizontally distributed over the whole display area
+            int w = (int) gs[nScreens-1].getDefaultConfiguration().getBounds().getMaxX();
+            int h = (int) gs[nScreens-1].getDefaultConfiguration().getBounds().getMaxY();
+            frame.getFrame().setBounds(w * frameNo / nFrames, 0, w / nFrames, h);
+        }
+
+        frame.getFrame().setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.putAttribute("isInitialized", "true");
+    }
+
+    Rectangle getFormFrameBounds(BRContext brContext) {
+        int nFrames = brContext.getCurrentCase().getHangingProtocolObject().getSeriesGroups().size();  //MT safe?
+        //QDesktopWidget desktop = QApplication.desktop();
+        //int nScreens = desktop.screenCount();  //always 1... (the whole virtual screen)
+        GraphicsDevice[] gs = getScreens();
+        int nScreens = gs.length;
+        Rectangle b = gs[nScreens-1].getDefaultConfiguration().getBounds();
+        if (nFrames < nScreens) {
+            return b;
+        } else {
+            return new Rectangle(b.x + b.width / 4, b.y + b.height / 4, b.width / 2, b.height / 2);
+        }
     }
 
     void initializeFormFrame(FormFrame formFrame, BRContext brContext) {
-        //formFrame.setSize(600, 600);
+        // we're in the QT thread here
     }
 
     void initializeViewPanel(BRViewPanel panel, ListModel/*or ModelFactory+key?*/ seriesModel, BRContext brContext) {

@@ -3,6 +3,7 @@ package de.sofd.iirkit.form;
 import com.trolltech.qt.core.QCoreApplication;
 import com.trolltech.qt.gui.QApplication;
 import de.sofd.iirkit.App;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,6 +25,7 @@ public class FormRunner {
 
     private boolean isRunning = false;
     private final List<FormDoneListener> finishedListeners = new ArrayList<FormDoneListener>();
+    private Runnable formShownCallback;
     private FormFrame formFrame;
     private final App app;
 
@@ -52,6 +54,10 @@ public class FormRunner {
     }
 
     public void start(final String url) {
+        start(url, null);
+    }
+
+    public void start(final String url, final Rectangle formBounds) {
         if (isRunning) {
             throw new IllegalStateException("FormRunner already running");
         }
@@ -79,6 +85,12 @@ public class FormRunner {
                     }
                 });
                 formFrame.show();
+                if (null != formBounds) {
+                    formFrame.setGeometry(formBounds.x, formBounds.y, formBounds.width, formBounds.height);
+                }
+                if (formShownCallback != null) {
+                    formShownCallback.run();
+                }
             }
         });
 
@@ -106,6 +118,20 @@ public class FormRunner {
             }
         }
     }
+
+    public Runnable getFormShownCallback() {
+        return formShownCallback;
+    }
+
+    /**
+     * Callback to run when the form frame was just shown. RUNS IN THE QT THREAD.
+     *
+     * @param formShownCallback
+     */
+    public void setFormShownCallback(Runnable formShownCallback) {
+        this.formShownCallback = formShownCallback;
+    }
+
 
     public void disposeFrame() {
 

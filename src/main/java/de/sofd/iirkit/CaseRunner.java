@@ -99,7 +99,13 @@ public class CaseRunner implements BRContext {
     }
 
     protected void initializeFormFrameFor(Case c) {
-        formRunner.start(c.getHangingProtocolObject().getEcrfUrl());
+        formRunner.setFormShownCallback(new Runnable() {
+            @Override
+            public void run() {
+                brHandler.initializeFormFrame(formRunner.getFormFrame(), CaseRunner.this);
+            }
+        });
+        formRunner.start(c.getHangingProtocolObject().getEcrfUrl(), brHandler.getFormFrameBounds(this));
         formRunner.addFormDoneListener(new FormDoneListener() {
             @Override
             public void formSubmitted(FormDoneEvent event) {
@@ -116,7 +122,6 @@ public class CaseRunner implements BRContext {
                 System.exit(0);
             }
         });
-        brHandler.initializeFormFrame(formRunner.getFormFrame(), this);
     }
 
     protected void initializeViewPanelsFor(Case c, BRFrameView frame, int frameNo) {
