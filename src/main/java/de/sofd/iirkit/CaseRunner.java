@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import javax.swing.DefaultListModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.apache.log4j.Logger;
@@ -134,11 +133,11 @@ public class CaseRunner implements BRContext {
             if (null == modelFactory.getModel(serUrl)) {
                 modelFactory.addModel(serUrl, new File(serUrl));
             }
-            vp.getListView().setModel(modelFactory.getModel(serUrl));
+            brHandler.initializeViewPanel(vp, modelFactory.getModel(serUrl), this);
         }
         //reset model in unused lists
         for (; i < frame.getViewPanelsCount(); i++) {
-            frame.getViewPanel(i).getListView().setModel(new DefaultListModel());
+            brHandler.resetViewPanel(frame.getViewPanel(i), this);
         }
         frame.setDisplayRange(0, serGrp.getSeriesUrlsCount() - 1);
         frame.setActiveViewPanelsCount(serGrp.getSeriesUrlsCount());

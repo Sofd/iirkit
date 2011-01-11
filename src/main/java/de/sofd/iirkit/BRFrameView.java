@@ -177,6 +177,7 @@ public class BRFrameView extends FrameView {
     }
 
     public void setDisplayRange(int firstIdx, int lastIdx) {
+        assert(lastIdx < viewPanels.size());
         listsPanel.removeAll();
         int count = lastIdx - firstIdx + 1;
         if (count < 6) {
