@@ -2,6 +2,7 @@ package de.sofd.iirkit;
 
 import de.sofd.iirkit.form.FormFrame;
 import de.sofd.iirkit.service.SeriesGroup;
+import de.sofd.lang.Runnable2;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
 import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
@@ -33,6 +34,9 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import static de.sofd.viskit.util.DicomUtil.PatientBasedMainAxisOrientation;
 import java.util.List;
 import javax.swing.AbstractAction;
@@ -44,11 +48,16 @@ import javax.swing.JLabel;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import javax.swing.WindowConstants;
+import org.apache.log4j.Logger;
 import org.dcm4che2.data.DicomObject;
 import org.dcm4che2.data.Tag;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
 
 /**
  * One instance only, with global lifetime.
@@ -60,6 +69,44 @@ import org.jdesktop.beansbinding.Bindings;
  * @author olaf
  */
 class BRHandler {
+
+    static final Logger logger = Logger.getLogger(BRHandler.class);
+
+    private Scriptable jsScope;
+    private boolean isJsInitialized = false;
+
+    /**
+     * For use from Javascript.
+     * 
+     * @param s
+     */
+    public static void print(String s) {
+        System.out.println(s);
+    }
+
+    private void runJs(Runnable2<Context, Scriptable> code) {
+        Context cx = Context.enter();
+        try {
+            if (null == jsScope) {
+                ScriptableObject jsScopeTmp = cx.initStandardObjects();
+                if (!isJsInitialized) {
+                    try {
+                        jsScopeTmp.defineFunctionProperties(new String[]{"print"}, BRHandler.this.getClass(), ScriptableObject.DONTENUM);
+                        Reader r = new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("de/sofd/iirkit/resources/scripts/brhandler.js"), "utf-8");
+                        cx.evaluateReader(jsScopeTmp, r, "brHandler", 1, null);
+                        //cx.evaluateString(jsScopeTmp, "print('HELLO FROM JS'); function caseStarting(ctx) { print('CASE STARTING'); }", "<cmd>", 1, null);
+                    } catch (IOException ex) {
+                        throw new RuntimeException("I/O error reading the brHandler script: " + ex.getLocalizedMessage(), ex);
+                    }
+                    jsScope = jsScopeTmp;
+                    isJsInitialized = true;
+                }
+            }
+            code.run(cx, jsScope);
+        } finally {
+            Context.exit();
+        }
+    }
 
     private final MultiILVSyncSetController multiSyncSetController = new MultiILVSyncSetController();
 
@@ -87,7 +134,18 @@ class BRHandler {
      *
      * @param brContext
      */
-    void caseStarting(BRContext brContext) {
+    void caseStarting(final BRContext brContext) {
+        runJs(new Runnable2<Context, Scriptable>() {
+            @Override
+            public void run(Context cx, Scriptable scope) {
+                Object fn = scope.get("caseStarting", scope);
+                if (!(fn instanceof Function)) {
+                    logger.debug("function not defined in script: caseStarting");
+                } else {
+                    ((Function)fn).call(cx, scope, scope, new Object[]{brContext});
+                }
+            }
+        });
     }
 
     // default frame geometry autoconfiguration. Will work for multiple displays
