@@ -2,6 +2,7 @@ package de.sofd.iirkit;
 
 import de.sofd.iirkit.form.FormFrame;
 import de.sofd.iirkit.service.SeriesGroup;
+import de.sofd.lang.Function2;
 import de.sofd.lang.Runnable2;
 import de.sofd.util.FloatRange;
 import de.sofd.viskit.controllers.GenericILVCellPropertySyncController;
@@ -84,7 +85,13 @@ class BRHandler {
         System.out.println(s);
     }
 
-    private void runJs(Runnable2<Context, Scriptable> code) {
+    /**
+     * Run code with a valid Rhine context and scope (and the brhandler.js script
+     * loaded). Return what the code returned.
+     *
+     * @param code
+     */
+    private Object runInRhinoContext(Function2<Context, Scriptable, Object> code) {
         Context cx = Context.enter();
         try {
             if (null == jsScope) {
@@ -102,10 +109,42 @@ class BRHandler {
                     isJsInitialized = true;
                 }
             }
-            code.run(cx, jsScope);
+            return code.run(cx, jsScope);
         } finally {
             Context.exit();
         }
+    }
+
+    /**
+     * Like the other variant, except the code (and thus this function) returns
+     * nothing.
+     *
+     * @param code
+     * @return
+     */
+    private void runInRhinoContext(final Runnable2<Context, Scriptable> code) {
+        runInRhinoContext(new Function2<Context, Scriptable, Object>() {
+            @Override
+            public Object run(Context p0, Scriptable p1) {
+                code.run(p0, p1);
+                return null;
+            }
+        });
+    }
+
+    private Object callJsFunction(final String name, final Object... args) {
+        return runInRhinoContext(new Function2<Context, Scriptable, Object>() {
+            @Override
+            public Object run(Context cx, Scriptable scope) {
+                Object fn = scope.get(name, scope);
+                if (!(fn instanceof Function)) {
+                    logger.debug("function not defined in script: caseStarting");
+                    return null;
+                } else {
+                    return ((Function)fn).call(cx, scope, scope, args);
+                }
+            }
+        });
     }
 
     private final MultiILVSyncSetController multiSyncSetController = new MultiILVSyncSetController();
@@ -135,17 +174,7 @@ class BRHandler {
      * @param brContext
      */
     void caseStarting(final BRContext brContext) {
-        runJs(new Runnable2<Context, Scriptable>() {
-            @Override
-            public void run(Context cx, Scriptable scope) {
-                Object fn = scope.get("caseStarting", scope);
-                if (!(fn instanceof Function)) {
-                    logger.debug("function not defined in script: caseStarting");
-                } else {
-                    ((Function)fn).call(cx, scope, scope, new Object[]{brContext});
-                }
-            }
-        });
+        callJsFunction("caseStarting", brContext);
     }
 
     // default frame geometry autoconfiguration. Will work for multiple displays
