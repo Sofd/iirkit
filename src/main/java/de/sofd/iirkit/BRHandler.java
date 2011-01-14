@@ -520,6 +520,7 @@ class BRHandler {
      * @param brContext
      */
     void caseStartingPostFrameInitialization(BRContext brContext) {
+        callJsFunction("caseStartingPostFrameInitialization", brContext);
         multiSyncSetController.disconnect();
         //multiSyncSetController.addSyncSet(DicomUtil.PatientBasedMainAxisOrientation.CORONAL);
         //multiSyncSetController.addSyncSet(DicomUtil.PatientBasedMainAxisOrientation.SAGGITAL);

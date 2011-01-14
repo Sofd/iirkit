@@ -60,16 +60,11 @@ function caseStarting(brContext) {
 }
 
 
-// default frame geometry autoconfiguration. Will work for multiple displays
+// default frame geometry autoconfiguration. Will work for one or more displays
 // arranged horizontally. For anything more exotic, roll your own.
 
-function getScreens() {
-    if (!this.screens) {
-        print("getting screens");
-        this.screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-    }
-    return screens;
-}
+var screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+var nScreens = screens.length;
 
 /**
  * Called once per
@@ -80,15 +75,13 @@ function getScreens() {
 function initializeFrame(frame, frameNo, brContext) {
     print("initializeFrame");
     var nFrames = brContext.currentCase.hangingProtocolObject.seriesGroups.size();
-    var gs = getScreens();
-    var nScreens = gs.length;
     if (nFrames <= nScreens) {
         // frame n on screen n
-        frame.frame.setBounds(gs[frameNo].defaultConfiguration.bounds);
+        frame.frame.setBounds(screens[frameNo].defaultConfiguration.bounds);
     } else {
         //frames horizontally distributed over the whole display area
-        var w = gs[nScreens-1].defaultConfiguration.bounds.maxX;
-        var h = gs[nScreens-1].defaultConfiguration.bounds.maxY;
+        var w = screens[nScreens-1].defaultConfiguration.bounds.maxX;
+        var h = screens[nScreens-1].defaultConfiguration.bounds.maxY;
         frame.frame.setBounds(w * frameNo / nFrames, 0, w / nFrames, h);
     }
 
@@ -98,12 +91,16 @@ function initializeFrame(frame, frameNo, brContext) {
 
 function getFormFrameBounds(brContext) {
     var nFrames = brContext.currentCase.hangingProtocolObject.seriesGroups.size();
-    var gs = getScreens();
-    var nScreens = gs.length;
-    var b = gs[nScreens-1].defaultConfiguration.bounds;
+    var b = screens[nScreens-1].defaultConfiguration.bounds;
     if (nFrames < nScreens) {
         return b;
     } else {
         return new Rectangle(b.x + b.width / 4, b.y + b.height / 4, b.width / 2, b.height / 2);
     }
+}
+
+var multiSyncSetController = new MultiILVSyncSetController();
+
+function caseStartingPostFrameInitialization(brContext) {
+    print("mssc=" + multiSyncSetController);
 }
