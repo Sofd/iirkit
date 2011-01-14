@@ -1,3 +1,4 @@
+importPackage(java.lang);
 importClass(Packages.de.sofd.iirkit.form.FormFrame);
 importClass(Packages.de.sofd.iirkit.service.SeriesGroup);
 importClass(Packages.de.sofd.lang.Function2);
@@ -37,6 +38,7 @@ importClass(Packages.java.io.IOException);
 importClass(Packages.java.io.InputStreamReader);
 importClass(Packages.java.io.Reader);
 importClass(Packages.java.util.List);
+importClass(Packages.javax.swing.Action);
 importClass(Packages.javax.swing.AbstractAction);
 importClass(Packages.javax.swing.Action);
 importClass(Packages.javax.swing.DefaultListModel);
@@ -49,7 +51,7 @@ importClass(Packages.javax.swing.WindowConstants);
 importClass(Packages.org.apache.log4j.Logger);
 importClass(Packages.org.dcm4che2.data.DicomObject);
 importClass(Packages.org.dcm4che2.data.Tag);
-importClass(Packages.org.jdesktop.beansbinding.AutoBinding.UpdateStrategy);
+importClass(Packages.org.jdesktop.beansbinding.AutoBinding);
 importClass(Packages.org.jdesktop.beansbinding.BeanProperty);
 importClass(Packages.org.jdesktop.beansbinding.Bindings);
 
@@ -82,6 +84,27 @@ if (!Object.prototype.forEachKey) {
             }
         }
     }
+}
+
+function javaStrArr() {
+    var result = java.lang.reflect.Array.newInstance(java.lang.String, arguments.length);
+    //arguments is not an array :-\
+    for (var i=0; i<arguments.length; i++) {
+        result[i] = arguments[i];
+    }
+    return result;
+}
+
+
+function createAction(name, tooltip, callback) {
+    var result = new JavaAdapter(AbstractAction, ActionListener, {
+        actionPerformed: callback
+    });
+    result.putValue(Action.NAME, name);
+    if (tooltip) {
+        result.putValue(Action.SHORT_DESCRIPTION, name);
+    }
+    return result;
 }
 
 
@@ -130,6 +153,269 @@ function getFormFrameBounds(brContext) {
 }
 
 var multiSyncSetController = new MultiILVSyncSetController();
+useDynamicListsCount = System.getProperty("iirkit.useDynamicListsCount");
+useJ2DInFrameViews = true; //java.lang.System.getProperty("iirkit.useJ2DInFrameViews");
+useInlineEnlargedView = System.getProperty("iirkit.useInlineEnlargedView");
+
+function initializeViewPanel(panel, seriesModel, brContext) {
+    if (!panel.getAttribute("ui")) {
+        doInitializeViewPanel(panel, seriesModel);
+    }
+    panel.getAttribute("ui").listView.setModel(seriesModel);
+}
+
+function doInitializeViewPanel(panel, seriesModel) {
+    panel.setLayout(new BorderLayout());
+    var listView;
+    if (useJ2DInFrameViews) {
+        listView = new JGridImageListView();
+        listView.setScaleMode(new JGridImageListView.MyScaleMode(1, 1));
+    } else {
+        listView = new JGLImageListView();
+        listView.setScaleMode(new JGLImageListView.MyScaleMode(1, 1));
+    }
+
+    var ui = {};
+    panel.putAttribute("ui", ui);
+    var controllers = {};
+    panel.putAttribute("controllers", controllers);
+
+    ui.listView = listView;
+
+    listView.setBackground(Color.DARK_GRAY);
+    panel.add(listView, BorderLayout.CENTER);
+
+    //can't directly port inner class creation w/ c'tor args -- see http://www.mail-archive.com/dev-tech-js-engine-rhino@lists.mozilla.org/msg00518.html
+
+    controllers.lazyWindowingToOptimalInitializationController = new JavaAdapter(ImageListViewInitialWindowingController, {
+        initializeCell: function(cell) {
+            setWindowingToOptimal(cell);
+        }
+    });
+    controllers.lazyWindowingToOptimalInitializationController.controlledImageListView = listView;
+    controllers.lazyWindowingToOptimalInitializationController.enabled = false;
+
+    controllers.lazyWindowingToQCInitializationController = new JavaAdapter(ImageListViewInitialWindowingController, {
+        initializeCell: function(cell) {
+            setWindowingToQC(cell);
+        }
+    });
+    controllers.lazyWindowingToQCInitializationController.controlledImageListView = listView;
+    controllers.lazyWindowingToQCInitializationController.enabled = true;
+
+    controllers.lazyZoomPanInitializationController = new ImageListViewInitialZoomPanController(listView);
+    controllers.lazyZoomPanInitializationController.enabled = true;
+
+    new ImageListViewMouseWindowingController(listView);
+    new ImageListViewMouseZoomPanController(listView).setDoubleClickResetEnabled(false);
+    new ImageListViewRoiInputEventController(listView);
+    new ImageListViewImagePaintController(listView).setEnabled(true);
+
+    sssc = new ImageListViewSelectionScrollSyncController(listView);
+    sssc.scrollPositionTracksSelection = true;
+    sssc.selectionTracksScrollPosition = true;
+    sssc.allowEmptySelection = false;
+    sssc.enabled = true;
+
+    controllers.ptc = new JavaAdapter(ImageListViewPrintTextToCellsController, {
+        //TODO: apparently, JavaAdapter doesn't support overriding protected methods :-(
+        /*
+        getTextToPrint: function(cell) {
+            var infoMode = panel.getAttribute("infoMode");
+            if (!infoMode) { infoMode = 0; }
+            if (infoMode == 0) {
+                return new String[0];
+            }
+            var elt = cell.getDisplayedModelElement();
+            var dicomImageMetaData = elt.getDicomImageMetaData();
+            //"PN: " + dicomImageMetaData.getString(Tag.PatientName),
+            var indexStr = "" + cell.getOwner().getIndexOf(cell);
+            if (infoMode == 1) {
+                return javaStrArr(
+                            //cellTextListArray[panelIdx],
+                            //cellTextListArraySecret[panelIdx],
+                            );
+            } else {
+                var orientation = elt.getAttribute("orientationPreset");
+                if (!orientation) {
+                    orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
+                }
+                return javaStrArr(
+                            //cellTextListArray[panelIdx],
+                            "SL: " + " [" + indexStr + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
+                            "O: " + orientation,
+                            "WL/WW: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
+                            "Zoom: " + cell.getScale()
+                            //cellTextListArraySecret[panelIdx],
+                            );
+            }
+        }
+        */
+    });
+    controllers.ptc.controlledImageListView = listView;
+    controllers.ptc.enabled = true;
+
+    new ImageListViewMouseMeasurementController(listView).setEnabled(true);
+
+    var toolbar = new JToolBar();
+    toolbar.floatable = false;
+    panel.add(toolbar, BorderLayout.PAGE_START);
+
+    /*
+    toolbar.add(new JLabel("ScaleMode:"));
+     */
+
+    if (useInlineEnlargedView) {
+        var scaleModeCombo = new JComboBox();
+        listView.getSupportedScaleModes().foreach(function(sm) {
+            scaleModeCombo.addItem(sm);
+        });
+        toolbar.add(scaleModeCombo);
+        scaleModeCombo.setEditable(false);
+        Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
+            listView, BeanProperty.create("scaleMode"),
+            scaleModeCombo, BeanProperty.create("selectedItem")).bind();
+    }
+
+    toolbar.add(createAction("wRST", "Reset Windowing",
+        function() {
+            controllers.wndAllController.runWithControllerInhibited(new java.lang.Runnable({
+                run: function() {
+                    var selIdx = listView.getSelectedIndex();
+                    if (selIdx >= 0 && selIdx < listView.getLength()) {
+                        var cell = listView.getCell(selIdx);
+                        setWindowingToQC(cell);
+                    }
+                }
+            }));
+        }
+    ));
+
+    toolbar.add(createAction("waRST", "Reset Windowing (All Images)", function() {
+        resetAllWindowing(panel);
+    }));
+
+    controllers.wndAllController = new ImageListViewWindowingApplyToAllController(listView);
+    controllers.wndAllController.setIgnoreNonInteractiveChanges(false);
+    controllers.wndAllController.setEnabled(true);
+    var wndAllCheckbox = new JCheckBox("wA");
+    wndAllCheckbox.setToolTipText("Window All Images");
+    toolbar.add(wndAllCheckbox);
+    Bindings.createAutoBinding(AutoBinding.UpdateStrategy.READ_WRITE,
+            controllers.wndAllController, BeanProperty.create("enabled"),
+            wndAllCheckbox, BeanProperty.create("selected")).bind();
+
+    var getUnscaledPreferredCellSize = function(cell) {
+        var elt = cell.getDisplayedModelElement();
+        w = elt.getDicomImageMetaData().getInt(Tag.Columns);
+        h = elt.getDicomImageMetaData().getInt(Tag.Rows);
+        return new Dimension(w, h);
+    };
+
+    toolbar.add(createAction("zRST", "Reset Zoom/Pan", function() {
+        controllers.zpAllController.runWithControllerInhibited(new java.lang.Runnable({
+            run: function() {
+                var selIdx = listView.getSelectedIndex();
+                if (selIdx != -1 && listView.isVisibleIndex(selIdx)) {
+                    var cell = listView.getCell(selIdx);
+                    cell.setCenterOffset(0, 0);
+                    var cellImgDisplaySize = cell.getLatestSize();
+                    var cz = getUnscaledPreferredCellSize(cell);
+                    var scalex = cellImgDisplaySize.width / cz.width;
+                    var scaley = cellImgDisplaySize.height / cz.height;
+                    var scale = java.lang.Math.min(scalex, scaley);
+                    cell.setScale(scale);
+                }
+            }
+        }));
+     }));
+
+    toolbar.add(createAction("zaRST", "Reset Zoom/Pan (All Images)", function() {
+        controllers.zpAllController.runWithControllerInhibited(new java.lang.Runnable({
+            run: function() {
+                controllers.lazyZoomPanInitializationController.reset();
+            }
+        }));
+     }));
+
+    controllers.zpAllController = new ImageListViewZoomPanApplyToAllController(listView);
+    controllers.zpAllController.setIgnoreNonInteractiveChanges(false);
+    controllers.zpAllController.setEnabled(true);
+    var zpAllCheckbox = new JCheckBox("zA");
+    zpAllCheckbox.setToolTipText("Zoom/Pan All Images");
+    toolbar.add(zpAllCheckbox);
+    Bindings.createAutoBinding(AutoBinding.UpdateStrategy.READ_WRITE,
+            controllers.zpAllController, BeanProperty.create("enabled"),
+            zpAllCheckbox, BeanProperty.create("selected")).bind();
+
+    if (!useInlineEnlargedView) {
+        /*
+        addCellMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
+                    final ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
+                    final SingleImageViewDialog sidlg = new SingleImageViewDialog(sourceCell, parentFrameView.getFrame(), true);
+                    sidlg.setBounds(parentFrameView.getFrame().getBounds());
+                    sidlg.setVisible(true);
+                    wndAllController.runWithControllerInhibited(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            int[][] params = sidlg.getLastWindowingParams();
+                            for (int i = 0; i < params.length; i++) {
+                                int[] wndLocationAndWidth = params[i];
+                                ImageListViewCell cell = listView.getCell(i);
+                                cell.setWindowLocation(wndLocationAndWidth[0]);
+                                cell.setWindowWidth(wndLocationAndWidth[1]);
+                            }
+
+                            // hack: wiggle the wnd. parameters of sourceCell, while also simulating an interactive (mouse-initiated) change,
+                            // to make any active sync controller synchronize it over to other lists
+                            int wl = sourceCell.getWindowLocation();
+                            int ww = sourceCell.getWindowWidth();
+                            sourceCell.setWindowLocation(wl + 1);
+                            sourceCell.setInteractively("windowLocation", wl);
+                            sourceCell.setWindowWidth(ww + 1);
+                            sourceCell.setInteractively("windowWidth", ww);
+                        }
+                    });
+                }
+            }
+        });
+         *
+         */
+    }
+
+    ui.syncButtonsToolbar = new JToolBar();
+    ui.syncButtonsToolbar.setFloatable(false);
+    toolbar.add(ui.syncButtonsToolbar);
+}
+
+
+
+function setWindowingToOptimal(cell) {
+    var usedRange = cell.getDisplayedModelElement().getImage().getUsedPixelValuesRange();
+    cell.setWindowWidth(usedRange.getDelta());
+    cell.setWindowLocation((usedRange.getMin() + usedRange.getMax()) / 2);
+}
+
+function setWindowingToQC(cell) {
+    //...
+}
+
+function resetAllWindowing(panel) {
+    var controllers = panel.getAttribute("controllers");
+    controllers.lazyWindowingToOptimalInitializationController.setEnabled(false);
+    controllers.lazyWindowingToQCInitializationController.setEnabled(true);
+    controllers.lazyWindowingToQCInitializationController.reset();
+    controllers.wndAllController.runWithControllerInhibited({run:function() {
+        controllers.lazyWindowingToQCInitializationController.initializeAllCellsImmediately(false);
+    }});
+}
+
+
 var orientations = DicomUtil.PatientBasedMainAxisOrientation.values();
 
 function caseStartingPostFrameInitialization(brContext) {

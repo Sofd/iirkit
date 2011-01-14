@@ -196,11 +196,14 @@ class BRHandler {
     }
 
     void initializeViewPanel(BRViewPanel panel, ListModel/*or ModelFactory+key?*/ seriesModel, BRContext brContext) {
+        callJsFunction("initializeViewPanel", panel, seriesModel, brContext);
+        /*
         if (null == panel.getAttribute("ui")) {
             doInitializeViewPanel(panel, seriesModel);
         }
         final PanelUIElements ui = (PanelUIElements) panel.getAttribute("ui");
         ui.listView.setModel(seriesModel);
+         */
     }
 
     private void doInitializeViewPanel(final BRViewPanel panel, ListModel/*or ModelFactory+key?*/ seriesModel) {
@@ -513,13 +516,17 @@ class BRHandler {
         ui.listView.setModel(new DefaultListModel());
     }
 
+    void caseStartingPostFrameInitialization(BRContext brContext) {
+        callJsFunction("caseStartingPostFrameInitialization", brContext);
+    }
+
     /**
      * Called when a new case is being started, after the frames (and the panels inside them)
      * are created/initialized. brContext.getCurrentCaseFrames() contains the frames.
      *
      * @param brContext
      */
-    void caseStartingPostFrameInitialization(BRContext brContext) {
+    void caseStartingPostFrameInitialization1(BRContext brContext) {
         callJsFunction("caseStartingPostFrameInitialization", brContext);
         multiSyncSetController.disconnect();
         //multiSyncSetController.addSyncSet(DicomUtil.PatientBasedMainAxisOrientation.CORONAL);
