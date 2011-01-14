@@ -36,7 +36,6 @@ importClass(Packages.java.awt.event.ActionListener);
 importClass(Packages.java.io.IOException);
 importClass(Packages.java.io.InputStreamReader);
 importClass(Packages.java.io.Reader);
-//importClass(Packages.static de.sofd.viskit.util.DicomUtil.PatientBasedMainAxisOrientation);
 importClass(Packages.java.util.List);
 importClass(Packages.javax.swing.AbstractAction);
 importClass(Packages.javax.swing.Action);
@@ -53,6 +52,37 @@ importClass(Packages.org.dcm4che2.data.Tag);
 importClass(Packages.org.jdesktop.beansbinding.AutoBinding.UpdateStrategy);
 importClass(Packages.org.jdesktop.beansbinding.BeanProperty);
 importClass(Packages.org.jdesktop.beansbinding.Bindings);
+
+
+// utils (TODO move to separate file)
+if (!Array.prototype.foreach) {
+    Array.prototype.foreach = function(fn) {
+        for (var i=0; i<this.length; i++) {
+            fn(this[i],i);
+        }
+    }
+}
+
+if (!Array.prototype.map) {
+    Array.prototype.map = function(fn) {
+        var result = new Array(this.length);
+        for (var i=0; i<this.length; i++) {
+            result[i] = fn(this[i],i);
+        }
+        return result;
+    }
+}
+
+
+if (!Object.prototype.forEachKey) {
+    Object.prototype.forEachKey = function(fn) {
+        for (var key in this) {
+            if (this.hasOwnProperty(key)) {
+                fn(key);
+            }
+        }
+    }
+}
 
 
 function caseStarting(brContext) {
@@ -100,7 +130,153 @@ function getFormFrameBounds(brContext) {
 }
 
 var multiSyncSetController = new MultiILVSyncSetController();
+var orientations = DicomUtil.PatientBasedMainAxisOrientation.values();
 
 function caseStartingPostFrameInitialization(brContext) {
-    print("mssc=" + multiSyncSetController);
+    print("caseStartingPostFrameInitialization");
+    multiSyncSetController.disconnect();
+    //multiSyncSetController.addSyncSet(DicomUtil.PatientBasedMainAxisOrientation.CORONAL);
+    //multiSyncSetController.addSyncSet(DicomUtil.PatientBasedMainAxisOrientation.SAGGITAL);
+    //multiSyncSetController.addSyncSet(DicomUtil.PatientBasedMainAxisOrientation.TRANSVERSAL);
+    orientations.foreach(function(o) {
+        multiSyncSetController.addSyncSet(o);
+    });
+    multiSyncSetController.addSyncControllerType("selection", new JavaAdapter(MultiILVSyncSetController.SyncControllerFactory, {
+        createController: function() {
+            var result = new ImageListViewSelectionSynchronizationController();
+            result.keepRelativeSelectionIndices = true;
+            result.enabled = true;
+            return result;
+        }
+    }));
+    /*
+    multiSyncSetController.addSyncControllerType("windowing", new MultiILVSyncSetController.SyncControllerFactory() {
+
+        @Override
+        public MultiImageListViewController createController() {
+            GenericILVCellPropertySyncController result = new GenericILVCellPropertySyncController(new String[]{"windowLocation", "windowWidth"});
+            result.setEnabled(true);
+            return result;
+        }
+    });
+    multiSyncSetController.addSyncControllerType("zoompan", new MultiILVSyncSetController.SyncControllerFactory() {
+
+        @Override
+        public MultiImageListViewController createController() {
+            GenericILVCellPropertySyncController result = new GenericILVCellPropertySyncController(new String[]{"scale", "centerOffset"});
+            result.setEnabled(true);
+            return result;
+        }
+    });
+    */
+    // initialize synchronizations
+    orientations.foreach(function(o) {
+        multiSyncSetController.getSyncSet(o).syncController("selection", true);
+        //multiSyncSetController.getSyncSet(o).syncController("windowing", true);
+        //multiSyncSetController.getSyncSet(o).syncController("zoompan", true);
+    });
+
+    /*
+    final List<SeriesGroup> seriesGroups = brContext.getCurrentCase().getHangingProtocolObject().getSeriesGroups();
+    final List<BRFrameView> frames = brContext.getCurrentCaseFrames();
+    //there is one frame per series group; the frames correspond 1:1 to the seriesGroups
+
+    for (BRFrameView frame : frames) {
+        for (BRViewPanel vp : frame.getActiveViewPanels()) {
+            final PanelUIElements ui = (PanelUIElements) vp.getAttribute("ui");
+            if (ui.listView.getLength() > 0) {
+                DicomImageListViewModelElement elt = (DicomImageListViewModelElement) ui.listView.getElementAt(0);
+                PatientBasedMainAxisOrientation orientation = (PatientBasedMainAxisOrientation) elt.getAttribute("orientationPreset");
+                if (orientation == null) {
+                    orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
+                }
+                if (orientation != null) {
+                    final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(orientation);
+                    syncSet.addList(ui.listView);
+                }
+            }
+        }
+    }
+
+    for (BRFrameView frame : frames) {
+        for (BRViewPanel vp : frame.getActiveViewPanels()) {
+            final PanelUIElements ui = (PanelUIElements) vp.getAttribute("ui");
+            ui.syncButtonsToolbar.removeAll();
+            if (ui.listView.getLength() > 0) {
+                DicomImageListViewModelElement elt = (DicomImageListViewModelElement) ui.listView.getElementAt(0);
+                PatientBasedMainAxisOrientation orientation = (PatientBasedMainAxisOrientation) elt.getAttribute("orientationPreset");
+                if (orientation == null) {
+                    orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
+                }
+                if (orientation != null) {
+                    final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(orientation);
+                    if (syncSet.getSize() > 1) {
+                        final JCheckBox cb = new JCheckBox("Sync");
+                        cb.setToolTipText("Synchronize this series");
+                        ui.syncButtonsToolbar.add(cb);
+                        cb.setSelected(true);
+                        cb.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                if (cb.isSelected()) {
+                                    syncSet.addList(ui.listView);
+                                } else {
+                                    syncSet.removeList(ui.listView);
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    for (BRFrameView frameView : brContext.getCurrentCaseFrames()) {
+        frameView.mainToolBar.removeAll();
+        frameView.mainToolBar.add(new AbstractAction("Info") {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                for (BRFrameView frame : frames) {
+                    for (BRViewPanel vp : frame.getActiveViewPanels()) {
+                        Integer infoMode = (Integer) vp.getAttribute("infoMode");
+                        if (null == infoMode) { infoMode = 0; }
+                        infoMode = (infoMode + 1) % 3;
+                        vp.putAttribute("infoMode", infoMode);
+                        ((PanelUIElements) vp.getAttribute("ui")).listView.refreshCells();
+                    }
+                }
+            }
+        });
+        frameView.mainToolBar.addSeparator();
+        frameView.mainToolBar.add(new JLabel("Sync: "));
+        for (DicomUtil.PatientBasedMainAxisOrientation orientation : DicomUtil.PatientBasedMainAxisOrientation.values()) {
+            final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(orientation);
+            if (syncSet.getSize() < 2) {
+                continue;
+            }
+
+            frameView.mainToolBar.addSeparator();
+            frameView.mainToolBar.add(new JLabel("" + orientation + ": "));
+
+            JCheckBox cb = new JCheckBox("Selections");
+            cb.setToolTipText("Synchronize selections between " + orientation + " series");
+            cb.setModel(syncSet.getIsControllerSyncedModel("selection"));
+            frameView.mainToolBar.add(cb);
+
+            cb = new JCheckBox("Windowing");
+            cb.setToolTipText("Synchronize windowing between " + orientation + " series");
+            cb.setModel(syncSet.getIsControllerSyncedModel("windowing"));
+            frameView.mainToolBar.add(cb);
+
+            cb = new JCheckBox("Zoom/Pan");
+            cb.setToolTipText("Synchronize zoom/pan settings between " + orientation + " series");
+            cb.setModel(syncSet.getIsControllerSyncedModel("zoompan"));
+            frameView.mainToolBar.add(cb);
+        }
+        frameView.getFrame().invalidate();
+        frameView.getFrame().validate();
+        frameView.getFrame().repaint();
+    }
+    */
 }
