@@ -178,9 +178,9 @@ class BRHandler {
      * intialize the frame (not the view panels/listViews inside it)
      */
     void initializeFrame(BRFrameView frame, int frameNo, BRContext brContext) {
-        if (null != frame.getAttribute("isInitialized")) {
-            return;
-        }
+        //if (null != frame.getAttribute("isInitialized")) {
+        //    return;
+        //}
 
         int nFrames = brContext.getCurrentCase().getHangingProtocolObject().getSeriesGroups().size();
         GraphicsDevice[] gs = getScreens();
