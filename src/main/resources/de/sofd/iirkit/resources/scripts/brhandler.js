@@ -3,7 +3,6 @@ importClass(Packages.de.sofd.iirkit.form.FormFrame);
 importClass(Packages.de.sofd.iirkit.service.SeriesGroup);
 importPackage(Packages.de.sofd.viskit.controllers);
 importPackage(Packages.de.sofd.viskit.controllers.cellpaint);
-importClass(Packages.de.sofd.viskit.ui.imagelist.ImageListViewCell);
 importClass(Packages.de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView);
 importClass(Packages.de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView);
 importClass(Packages.de.sofd.viskit.util.DicomUtil);
@@ -366,43 +365,7 @@ function doInitializeViewPanel(panel, seriesModel) {
             zpAllCheckbox, BeanProperty.create("selected")).bind();
 
     if (!useInlineEnlargedView) {
-        /*
-        addCellMouseListener(new MouseAdapter() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
-                    final ImageListViewCell sourceCell = (ImageListViewCell) e.getSource();
-                    final SingleImageViewDialog sidlg = new SingleImageViewDialog(sourceCell, parentFrameView.getFrame(), true);
-                    sidlg.setBounds(parentFrameView.getFrame().getBounds());
-                    sidlg.setVisible(true);
-                    wndAllController.runWithControllerInhibited(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            int[][] params = sidlg.getLastWindowingParams();
-                            for (int i = 0; i < params.length; i++) {
-                                int[] wndLocationAndWidth = params[i];
-                                ImageListViewCell cell = listView.getCell(i);
-                                cell.setWindowLocation(wndLocationAndWidth[0]);
-                                cell.setWindowWidth(wndLocationAndWidth[1]);
-                            }
-
-                            // hack: wiggle the wnd. parameters of sourceCell, while also simulating an interactive (mouse-initiated) change,
-                            // to make any active sync controller synchronize it over to other lists
-                            int wl = sourceCell.getWindowLocation();
-                            int ww = sourceCell.getWindowWidth();
-                            sourceCell.setWindowLocation(wl + 1);
-                            sourceCell.setInteractively("windowLocation", wl);
-                            sourceCell.setWindowWidth(ww + 1);
-                            sourceCell.setInteractively("windowWidth", ww);
-                        }
-                    });
-                }
-            }
-        });
-         *
-         */
+        //display series in separate frame?
     }
 
     ui.syncButtonsToolbar = new JToolBar();
