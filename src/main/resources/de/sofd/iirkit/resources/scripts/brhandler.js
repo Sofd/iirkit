@@ -1,42 +1,18 @@
 importPackage(java.lang);
 importClass(Packages.de.sofd.iirkit.form.FormFrame);
 importClass(Packages.de.sofd.iirkit.service.SeriesGroup);
-importClass(Packages.de.sofd.lang.Function2);
-importClass(Packages.de.sofd.lang.Runnable2);
-importClass(Packages.de.sofd.util.FloatRange);
-importClass(Packages.de.sofd.viskit.controllers.GenericILVCellPropertySyncController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewInitialWindowingController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewInitialZoomPanController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewMouseMeasurementController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewMouseWindowingController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewMouseZoomPanController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewRoiInputEventController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewSelectionScrollSyncController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewSelectionSynchronizationController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController);
-importClass(Packages.de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController);
-importClass(Packages.de.sofd.viskit.controllers.MultiILVSyncSetController);
-importClass(Packages.de.sofd.viskit.controllers.MultiImageListViewController);
-importClass(Packages.de.sofd.viskit.controllers.cellpaint.ImageListViewImagePaintController);
-importClass(Packages.de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController);
-importClass(Packages.de.sofd.viskit.model.DicomImageListViewModelElement);
-importClass(Packages.de.sofd.viskit.model.ImageListViewModelElement);
+importPackage(Packages.de.sofd.viskit.controllers);
+importPackage(Packages.de.sofd.viskit.controllers.cellpaint);
 importClass(Packages.de.sofd.viskit.ui.imagelist.ImageListViewCell);
-importClass(Packages.de.sofd.viskit.ui.imagelist.JImageListView);
 importClass(Packages.de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView);
 importClass(Packages.de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView);
 importClass(Packages.de.sofd.viskit.util.DicomUtil);
 importClass(Packages.java.awt.BorderLayout);
 importClass(Packages.java.awt.Color);
 importClass(Packages.java.awt.Dimension);
-importClass(Packages.java.awt.GraphicsDevice);
 importClass(Packages.java.awt.GraphicsEnvironment);
 importClass(Packages.java.awt.Rectangle);
-importClass(Packages.java.awt.event.ActionEvent);
 importClass(Packages.java.awt.event.ActionListener);
-importClass(Packages.java.io.IOException);
-importClass(Packages.java.io.InputStreamReader);
-importClass(Packages.java.io.Reader);
 importClass(Packages.java.util.List);
 importClass(Packages.javax.swing.Action);
 importClass(Packages.javax.swing.AbstractAction);
@@ -48,8 +24,6 @@ importClass(Packages.javax.swing.JLabel);
 importClass(Packages.javax.swing.JToolBar);
 importClass(Packages.javax.swing.ListModel);
 importClass(Packages.javax.swing.WindowConstants);
-importClass(Packages.org.apache.log4j.Logger);
-importClass(Packages.org.dcm4che2.data.DicomObject);
 importClass(Packages.org.dcm4che2.data.Tag);
 importClass(Packages.org.jdesktop.beansbinding.AutoBinding);
 importClass(Packages.org.jdesktop.beansbinding.BeanProperty);
@@ -149,7 +123,7 @@ function initializeFrame(frame, frameNo, brContext) {
         var h = screens[nScreens-1].defaultConfiguration.bounds.maxY;
         frame.frame.setBounds(w * frameNo / nFrames, 0, w / nFrames, h);
     }
-    frame.frame.setTitle("Window " + frameNo);
+    frame.frame.title = "Window " + frameNo;
     frame.frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE;
     frame.putAttribute("isInitialized", "true");
 }
@@ -197,7 +171,7 @@ function initializeViewPanel(panel, seriesModel, brContext) {
     if (!panel.getAttribute("ui")) {
         doInitializeViewPanel(panel, seriesModel);
     }
-    panel.getAttribute("ui").listView.setModel(seriesModel);
+    panel.getAttribute("ui").listView.model = seriesModel;
 }
 
 
@@ -217,10 +191,10 @@ function doInitializeViewPanel(panel, seriesModel) {
     var listView;
     if (useJ2DInFrameViews) {
         listView = new JGridImageListView();
-        listView.setScaleMode(new JGridImageListView.MyScaleMode(1, 1));
+        listView.scaleMode = new JGridImageListView.MyScaleMode(1, 1);
     } else {
         listView = new JGLImageListView();
-        listView.setScaleMode(new JGLImageListView.MyScaleMode(1, 1));
+        listView.scaleMode = new JGLImageListView.MyScaleMode(1, 1);
     }
 
     var ui = {};
@@ -230,7 +204,7 @@ function doInitializeViewPanel(panel, seriesModel) {
 
     ui.listView = listView;
 
-    listView.setBackground(Color.DARK_GRAY);
+    listView.background = Color.DARK_GRAY;
     panel.add(listView, BorderLayout.CENTER);
 
     //can't directly port inner class creation w/ c'tor args -- see http://www.mail-archive.com/dev-tech-js-engine-rhino@lists.mozilla.org/msg00518.html
@@ -255,9 +229,9 @@ function doInitializeViewPanel(panel, seriesModel) {
     controllers.lazyZoomPanInitializationController.enabled = true;
 
     new ImageListViewMouseWindowingController(listView);
-    new ImageListViewMouseZoomPanController(listView).setDoubleClickResetEnabled(false);
+    new ImageListViewMouseZoomPanController(listView).doubleClickResetEnabled = false;
     new ImageListViewRoiInputEventController(listView);
-    new ImageListViewImagePaintController(listView).setEnabled(true);
+    new ImageListViewImagePaintController(listView).enabled = true;
 
     sssc = new ImageListViewSelectionScrollSyncController(listView);
     sssc.scrollPositionTracksSelection = true;
@@ -299,7 +273,7 @@ function doInitializeViewPanel(panel, seriesModel) {
     controllers.ptc.controlledImageListView = listView;
     controllers.ptc.enabled = true;
 
-    new ImageListViewMouseMeasurementController(listView).setEnabled(true);
+    new ImageListViewMouseMeasurementController(listView).enabled = true;
 
     var toolbar = new JToolBar();
     toolbar.floatable = false;
@@ -315,7 +289,7 @@ function doInitializeViewPanel(panel, seriesModel) {
             scaleModeCombo.addItem(sm);
         });
         toolbar.add(scaleModeCombo);
-        scaleModeCombo.setEditable(false);
+        scaleModeCombo.editable = false;
         Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
             listView, BeanProperty.create("scaleMode"),
             scaleModeCombo, BeanProperty.create("selectedItem")).bind();
@@ -340,10 +314,10 @@ function doInitializeViewPanel(panel, seriesModel) {
     }));
 
     controllers.wndAllController = new ImageListViewWindowingApplyToAllController(listView);
-    controllers.wndAllController.setIgnoreNonInteractiveChanges(false);
-    controllers.wndAllController.setEnabled(true);
+    controllers.wndAllController.ignoreNonInteractiveChanges = false;
+    controllers.wndAllController.enabled = true;
     var wndAllCheckbox = new JCheckBox("wA");
-    wndAllCheckbox.setToolTipText("Window All Images");
+    wndAllCheckbox.toolTipText = "Window All Images";
     toolbar.add(wndAllCheckbox);
     Bindings.createAutoBinding(AutoBinding.UpdateStrategy.READ_WRITE,
             controllers.wndAllController, BeanProperty.create("enabled"),
@@ -367,8 +341,7 @@ function doInitializeViewPanel(panel, seriesModel) {
                     var cz = getUnscaledPreferredCellSize(cell);
                     var scalex = cellImgDisplaySize.width / cz.width;
                     var scaley = cellImgDisplaySize.height / cz.height;
-                    var scale = Math.min(scalex, scaley);
-                    cell.setScale(scale);
+                    cell.scale = Math.min(scalex, scaley);
                 }
             }
         }));
@@ -383,10 +356,10 @@ function doInitializeViewPanel(panel, seriesModel) {
      }));
 
     controllers.zpAllController = new ImageListViewZoomPanApplyToAllController(listView);
-    controllers.zpAllController.setIgnoreNonInteractiveChanges(false);
-    controllers.zpAllController.setEnabled(true);
+    controllers.zpAllController.ignoreNonInteractiveChanges = false;
+    controllers.zpAllController.enabled = true;
     var zpAllCheckbox = new JCheckBox("zA");
-    zpAllCheckbox.setToolTipText("Zoom/Pan All Images");
+    zpAllCheckbox.toolTipText = "Zoom/Pan All Images";
     toolbar.add(zpAllCheckbox);
     Bindings.createAutoBinding(AutoBinding.UpdateStrategy.READ_WRITE,
             controllers.zpAllController, BeanProperty.create("enabled"),
@@ -433,7 +406,7 @@ function doInitializeViewPanel(panel, seriesModel) {
     }
 
     ui.syncButtonsToolbar = new JToolBar();
-    ui.syncButtonsToolbar.setFloatable(false);
+    ui.syncButtonsToolbar.floatable = false;
     toolbar.add(ui.syncButtonsToolbar);
 }
 
@@ -441,8 +414,8 @@ function doInitializeViewPanel(panel, seriesModel) {
 
 function setWindowingToOptimal(cell) {
     var usedRange = cell.getDisplayedModelElement().getImage().getUsedPixelValuesRange();
-    cell.setWindowWidth(usedRange.getDelta());
-    cell.setWindowLocation((usedRange.getMin() + usedRange.getMax()) / 2);
+    cell.windowWidth = usedRange.getDelta();
+    cell.windowLocation = (usedRange.getMin() + usedRange.getMax()) / 2;
 }
 
 function setWindowingToQC(cell) {
@@ -452,8 +425,8 @@ function setWindowingToQC(cell) {
 
 function resetAllWindowing(panel) {
     var controllers = panel.getAttribute("controllers");
-    controllers.lazyWindowingToOptimalInitializationController.setEnabled(false);
-    controllers.lazyWindowingToQCInitializationController.setEnabled(true);
+    controllers.lazyWindowingToOptimalInitializationController.enabled = false;
+    controllers.lazyWindowingToQCInitializationController.enabled = true;
     controllers.lazyWindowingToQCInitializationController.reset();
     controllers.wndAllController.runWithControllerInhibited(new Runnable({run:function() {
         controllers.lazyWindowingToQCInitializationController.initializeAllCellsImmediately(false);
@@ -487,14 +460,14 @@ function caseStartingPostFrameInitialization(brContext) {
     multiSyncSetController.addSyncControllerType("windowing", new JavaAdapter(MultiILVSyncSetController.SyncControllerFactory, {
         createController: function() {
             var result = new GenericILVCellPropertySyncController(newJavaStrArr("windowLocation", "windowWidth"));
-            result.setEnabled(true);
+            result.enabled = true;
             return result;
         }
     }));
     multiSyncSetController.addSyncControllerType("zoompan", new JavaAdapter(MultiILVSyncSetController.SyncControllerFactory, {
         createController: function() {
             var result = new GenericILVCellPropertySyncController(newJavaStrArr("scale", "centerOffset"));
-            result.setEnabled(true);
+            result.enabled = true;
             return result;
         }
     }));
@@ -540,9 +513,9 @@ function caseStartingPostFrameInitialization(brContext) {
                     var syncSet = multiSyncSetController.getSyncSet(orientation);
                     if (syncSet.getSize() > 1) {
                         var cb = new JCheckBox("Sync");
-                        cb.setToolTipText("Synchronize this series");
+                        cb.toolTipText = "Synchronize this series";
                         ui.syncButtonsToolbar.add(cb);
-                        cb.setSelected(true);
+                        cb.selected = true;
                         cb.addActionListener(ActionListener({
                             actionPerformed: function() {
                                 if (cb.isSelected()) {
@@ -580,18 +553,18 @@ function caseStartingPostFrameInitialization(brContext) {
                 frameView.mainToolBar.add(new JLabel("" + orientation + ": "));
 
                 var cb = new JCheckBox("Selections");
-                cb.setToolTipText("Synchronize selections between " + orientation + " series");
-                cb.setModel(syncSet.getIsControllerSyncedModel("selection"));
+                cb.toolTipText = "Synchronize selections between " + orientation + " series";
+                cb.model = syncSet.getIsControllerSyncedModel("selection");
                 frameView.mainToolBar.add(cb);
 
                 cb = new JCheckBox("Windowing");
-                cb.setToolTipText("Synchronize windowing between " + orientation + " series");
-                cb.setModel(syncSet.getIsControllerSyncedModel("windowing"));
+                cb.toolTipText = "Synchronize windowing between " + orientation + " series";
+                cb.model = syncSet.getIsControllerSyncedModel("windowing");
                 frameView.mainToolBar.add(cb);
 
                 cb = new JCheckBox("Zoom/Pan");
-                cb.setToolTipText("Synchronize zoom/pan settings between " + orientation + " series");
-                cb.setModel(syncSet.getIsControllerSyncedModel("zoompan"));
+                cb.toolTipText = "Synchronize zoom/pan settings between " + orientation + " series";
+                cb.model = syncSet.getIsControllerSyncedModel("zoompan");
                 frameView.mainToolBar.add(cb);
             }
         });
