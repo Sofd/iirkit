@@ -86,7 +86,7 @@ if (!Object.prototype.forEachKey) {
     }
 }
 
-function javaStrArr() {
+function newJavaStrArr() {
     var result = java.lang.reflect.Array.newInstance(java.lang.String, arguments.length);
     //arguments is not an array :-\
     for (var i=0; i<arguments.length; i++) {
@@ -122,8 +122,20 @@ var nScreens = screens.length;
 /**
  * Called once per
  * frame and case (and thus potentially multiple times per frame, as frames
- * may be reused between cases). The method should place and
- * intialize the frame (not the view panels/listViews inside it)
+ * may be reused between cases).
+ * After this method returns, the view panels for the series to be displayed will
+ * be created and initializeViewPanel() will be called for each of them, and finally
+ * caseStartingPostFrameInitialization() is called to finish the initialization of
+ * the frame.
+ *
+ * The method should place and
+ * intialize the frame (not the view panels/listViews inside it; as those will
+ * be created internally), and possibly create toolbar buttons or other per-frame
+ * UI elements. Note that the view panels aren't created yet when this method
+ * runs; so you may want to create UI elements in caseStartingPostFrameInitialization()
+ * rather than here if you need access to the view panels.
+ *
+ * You may place arbitrary data into the frame using frame,putAttribute(key,value)/getAttribute(key)
  */
 function initializeFrame(frame, frameNo, brContext) {
     print("initializeFrame");
@@ -137,11 +149,15 @@ function initializeFrame(frame, frameNo, brContext) {
         var h = screens[nScreens-1].defaultConfiguration.bounds.maxY;
         frame.frame.setBounds(w * frameNo / nFrames, 0, w / nFrames, h);
     }
-
+    frame.frame.setTitle("Window " + frameNo);
     frame.frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE;
     frame.putAttribute("isInitialized", "true");
 }
 
+/**
+ * The form frame for a case must be placed on the screen. This method must return
+ * a java.awt.Rectangle that specifies the bounds of the frame on the screen.
+ */
 function getFormFrameBounds(brContext) {
     var nFrames = brContext.currentCase.hangingProtocolObject.seriesGroups.size();
     var b = screens[nScreens-1].defaultConfiguration.bounds;
@@ -152,16 +168,48 @@ function getFormFrameBounds(brContext) {
     }
 }
 
-var multiSyncSetController = new MultiILVSyncSetController();
-useDynamicListsCount = System.getProperty("iirkit.useDynamicListsCount");
-useJ2DInFrameViews = true; //java.lang.System.getProperty("iirkit.useJ2DInFrameViews");
-useInlineEnlargedView = System.getProperty("iirkit.useInlineEnlargedView");
+/**
+ * Called when the form frame for a case is being initialized. Displaying the HTML page etc.
+ * is handled internally, so most of the time, this method doesn't have to do anything.
+ */
+function initializeFormFrame(formFrame, brContext) {
+    //runs in QT thread
+}
 
+var multiSyncSetController = new MultiILVSyncSetController();
+var useDynamicListsCount = System.getProperty("iirkit.useDynamicListsCount");
+var useJ2DInFrameViews = true; //java.lang.System.getProperty("iirkit.useJ2DInFrameViews");
+var useInlineEnlargedView = System.getProperty("iirkit.useInlineEnlargedView");
+
+/**
+ * Called when a view panel in a frame must be initialized. (called
+ * after initializeFrame() and before caseStartingPostFrameInitialization()
+ * was/is called for the frame that the vie panel belongs to).
+ * <p>
+ * A view panel is the rectangular panel in a frame that normally displays a series.
+ * The seriesModel parameter is the ListModel that holds the series data. The function
+ * should usually create a view for that model in the panel, and possibly one or more
+ * UI elements like toolbar buttons that perform operations on the view.
+ *
+ * You may place arbitrary data into the panel using panel,putAttribute(key,value)/getAttribute(key)
+ */
 function initializeViewPanel(panel, seriesModel, brContext) {
     if (!panel.getAttribute("ui")) {
         doInitializeViewPanel(panel, seriesModel);
     }
     panel.getAttribute("ui").listView.setModel(seriesModel);
+}
+
+
+/**
+ * Called when a view panel is (possibly temporarily) no longer used to display a series.
+ *
+ * @param panel
+ * @param brContext
+ */
+function resetViewPanel(panel, brContext) {
+    var ui = panel.getAttribute("ui");
+    ui.listView.setModel(new DefaultListModel());
 }
 
 function doInitializeViewPanel(panel, seriesModel) {
@@ -219,17 +267,16 @@ function doInitializeViewPanel(panel, seriesModel) {
 
     controllers.ptc = new JavaAdapter(ImageListViewPrintTextToCellsController, {
         getTextToPrint: function(cell) {
-            print("GETTEXTTOPRINT!!!");
             var infoMode = panel.getAttribute("infoMode");
             if (!infoMode) { infoMode = 0; }
             if (infoMode == 0) {
-                return java.lang.reflect.Array.newInstance(java.lang.String, 0);
+                return newJavaStrArr();
             }
             var elt = cell.getDisplayedModelElement();
             var dicomImageMetaData = elt.getDicomImageMetaData();
             //"PN: " + dicomImageMetaData.getString(Tag.PatientName),
             if (infoMode == 1) {
-                return javaStrArr(
+                return newJavaStrArr(
                             //cellTextListArray[panelIdx],
                             //cellTextListArraySecret[panelIdx],
                             );
@@ -238,7 +285,7 @@ function doInitializeViewPanel(panel, seriesModel) {
                 if (!orientation) {
                     orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
                 }
-                return javaStrArr(
+                return newJavaStrArr(
                             //cellTextListArray[panelIdx],
                             "SL: " + " [" + cell.getOwner().getIndexOf(cell) + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "O: " + orientation,
@@ -416,6 +463,10 @@ function resetAllWindowing(panel) {
 
 var orientations = DicomUtil.PatientBasedMainAxisOrientation.values();
 
+/**
+ * Called during the initialization of a frame AFTER the panels in the frame have been
+ * initialized.
+ */
 function caseStartingPostFrameInitialization(brContext) {
     print("caseStartingPostFrameInitialization");
     multiSyncSetController.disconnect();
@@ -433,26 +484,21 @@ function caseStartingPostFrameInitialization(brContext) {
             return result;
         }
     }));
-    /*
-    multiSyncSetController.addSyncControllerType("windowing", new MultiILVSyncSetController.SyncControllerFactory() {
-
-        @Override
-        public MultiImageListViewController createController() {
-            GenericILVCellPropertySyncController result = new GenericILVCellPropertySyncController(new String[]{"windowLocation", "windowWidth"});
+    multiSyncSetController.addSyncControllerType("windowing", new JavaAdapter(MultiILVSyncSetController.SyncControllerFactory, {
+        createController: function() {
+            var result = new GenericILVCellPropertySyncController(newJavaStrArr("windowLocation", "windowWidth"));
             result.setEnabled(true);
             return result;
         }
-    });
-    multiSyncSetController.addSyncControllerType("zoompan", new MultiILVSyncSetController.SyncControllerFactory() {
-
-        @Override
-        public MultiImageListViewController createController() {
-            GenericILVCellPropertySyncController result = new GenericILVCellPropertySyncController(new String[]{"scale", "centerOffset"});
+    }));
+    multiSyncSetController.addSyncControllerType("zoompan", new JavaAdapter(MultiILVSyncSetController.SyncControllerFactory, {
+        createController: function() {
+            var result = new GenericILVCellPropertySyncController(newJavaStrArr("scale", "centerOffset"));
             result.setEnabled(true);
             return result;
         }
-    });
-    */
+    }));
+
     // initialize synchronizations
     orientations.foreach(function(o) {
         multiSyncSetController.getSyncSet(o).syncController("selection", true);
@@ -460,107 +506,112 @@ function caseStartingPostFrameInitialization(brContext) {
         //multiSyncSetController.getSyncSet(o).syncController("zoompan", true);
     });
 
-    /*
-    final List<SeriesGroup> seriesGroups = brContext.getCurrentCase().getHangingProtocolObject().getSeriesGroups();
-    final List<BRFrameView> frames = brContext.getCurrentCaseFrames();
+    var seriesGroups = brContext.getCurrentCase().getHangingProtocolObject().getSeriesGroups().toArray();
+    var frames = brContext.getCurrentCaseFrames().toArray();
     //there is one frame per series group; the frames correspond 1:1 to the seriesGroups
 
-    for (BRFrameView frame : frames) {
-        for (BRViewPanel vp : frame.getActiveViewPanels()) {
-            final PanelUIElements ui = (PanelUIElements) vp.getAttribute("ui");
+    frames.foreach(function(frame) {
+        frame.getActiveViewPanels().toArray().foreach(function(vp) {
+            var ui = vp.getAttribute("ui");
             if (ui.listView.getLength() > 0) {
-                DicomImageListViewModelElement elt = (DicomImageListViewModelElement) ui.listView.getElementAt(0);
-                PatientBasedMainAxisOrientation orientation = (PatientBasedMainAxisOrientation) elt.getAttribute("orientationPreset");
-                if (orientation == null) {
+                var elt = ui.listView.getElementAt(0);
+                var orientation = elt.getAttribute("orientationPreset");
+                if (!orientation) {
                     orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
                 }
-                if (orientation != null) {
-                    final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(orientation);
-                    syncSet.addList(ui.listView);
+                if (orientation) {
+                    multiSyncSetController.getSyncSet(orientation).addList(ui.listView);
                 }
             }
-        }
-    }
+        });
+    });
 
-    for (BRFrameView frame : frames) {
-        for (BRViewPanel vp : frame.getActiveViewPanels()) {
-            final PanelUIElements ui = (PanelUIElements) vp.getAttribute("ui");
+    frames.foreach(function(frame) {
+        frame.getActiveViewPanels().toArray().foreach(function(vp) {
+            var ui = vp.getAttribute("ui");
             ui.syncButtonsToolbar.removeAll();
             if (ui.listView.getLength() > 0) {
-                DicomImageListViewModelElement elt = (DicomImageListViewModelElement) ui.listView.getElementAt(0);
-                PatientBasedMainAxisOrientation orientation = (PatientBasedMainAxisOrientation) elt.getAttribute("orientationPreset");
-                if (orientation == null) {
+                var elt = ui.listView.getElementAt(0);
+                var orientation = elt.getAttribute("orientationPreset");
+                if (!orientation) {
                     orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
                 }
-                if (orientation != null) {
-                    final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(orientation);
+                if (orientation) {
+                    var syncSet = multiSyncSetController.getSyncSet(orientation);
                     if (syncSet.getSize() > 1) {
-                        final JCheckBox cb = new JCheckBox("Sync");
+                        var cb = new JCheckBox("Sync");
                         cb.setToolTipText("Synchronize this series");
                         ui.syncButtonsToolbar.add(cb);
                         cb.setSelected(true);
-                        cb.addActionListener(new ActionListener() {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
+                        cb.addActionListener(ActionListener({
+                            actionPerformed: function() {
                                 if (cb.isSelected()) {
                                     syncSet.addList(ui.listView);
                                 } else {
                                     syncSet.removeList(ui.listView);
                                 }
                             }
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    for (BRFrameView frameView : brContext.getCurrentCaseFrames()) {
-        frameView.mainToolBar.removeAll();
-        frameView.mainToolBar.add(new AbstractAction("Info") {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                for (BRFrameView frame : frames) {
-                    for (BRViewPanel vp : frame.getActiveViewPanels()) {
-                        Integer infoMode = (Integer) vp.getAttribute("infoMode");
-                        if (null == infoMode) { infoMode = 0; }
-                        infoMode = (infoMode + 1) % 3;
-                        vp.putAttribute("infoMode", infoMode);
-                        ((PanelUIElements) vp.getAttribute("ui")).listView.refreshCells();
+                        }));
                     }
                 }
             }
         });
+    });
+
+    frames.foreach(function(frameView) {
+        frameView.mainToolBar.removeAll();
+        frameView.mainToolBar.add(createAction("Info", "toggle info display", function() {
+            frames.foreach(function(frame) {
+                frame.getActiveViewPanels().toArray().foreach(function(vp) {
+                    var infoMode = vp.getAttribute("infoMode");
+                    if (!infoMode) { infoMode = 0; }
+                    infoMode = (infoMode + 1) % 3;
+                    vp.putAttribute("infoMode", infoMode);
+                    vp.getAttribute("ui").listView.refreshCells();
+                });
+            });
+        }));
         frameView.mainToolBar.addSeparator();
         frameView.mainToolBar.add(new JLabel("Sync: "));
-        for (DicomUtil.PatientBasedMainAxisOrientation orientation : DicomUtil.PatientBasedMainAxisOrientation.values()) {
-            final MultiILVSyncSetController.SyncSet syncSet = multiSyncSetController.getSyncSet(orientation);
-            if (syncSet.getSize() < 2) {
-                continue;
+        orientations.foreach(function(orientation) {
+            var syncSet = multiSyncSetController.getSyncSet(orientation);
+            if (syncSet.getSize() > 1) {
+                frameView.mainToolBar.addSeparator();
+                frameView.mainToolBar.add(new JLabel("" + orientation + ": "));
+
+                var cb = new JCheckBox("Selections");
+                cb.setToolTipText("Synchronize selections between " + orientation + " series");
+                cb.setModel(syncSet.getIsControllerSyncedModel("selection"));
+                frameView.mainToolBar.add(cb);
+
+                cb = new JCheckBox("Windowing");
+                cb.setToolTipText("Synchronize windowing between " + orientation + " series");
+                cb.setModel(syncSet.getIsControllerSyncedModel("windowing"));
+                frameView.mainToolBar.add(cb);
+
+                cb = new JCheckBox("Zoom/Pan");
+                cb.setToolTipText("Synchronize zoom/pan settings between " + orientation + " series");
+                cb.setModel(syncSet.getIsControllerSyncedModel("zoompan"));
+                frameView.mainToolBar.add(cb);
             }
-
-            frameView.mainToolBar.addSeparator();
-            frameView.mainToolBar.add(new JLabel("" + orientation + ": "));
-
-            JCheckBox cb = new JCheckBox("Selections");
-            cb.setToolTipText("Synchronize selections between " + orientation + " series");
-            cb.setModel(syncSet.getIsControllerSyncedModel("selection"));
-            frameView.mainToolBar.add(cb);
-
-            cb = new JCheckBox("Windowing");
-            cb.setToolTipText("Synchronize windowing between " + orientation + " series");
-            cb.setModel(syncSet.getIsControllerSyncedModel("windowing"));
-            frameView.mainToolBar.add(cb);
-
-            cb = new JCheckBox("Zoom/Pan");
-            cb.setToolTipText("Synchronize zoom/pan settings between " + orientation + " series");
-            cb.setModel(syncSet.getIsControllerSyncedModel("zoompan"));
-            frameView.mainToolBar.add(cb);
-        }
+        });
         frameView.getFrame().invalidate();
         frameView.getFrame().validate();
         frameView.getFrame().repaint();
-    }
-    */
+    });
+}
+
+
+/**
+ * A frame is about to be disposed.
+ */
+function frameDisposing(frame, frameNo, brContext) {
+}
+
+/**
+ * Called this user clicked OK on
+ * the form to finish a case. formResult already written to
+ * brContext.currentCase.result?
+ */
+function caseFinished(brContext) {
 }

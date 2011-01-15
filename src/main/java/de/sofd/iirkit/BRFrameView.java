@@ -143,6 +143,10 @@ public class BRFrameView extends FrameView {
         return getResourceMap().getString("Application.title") + " - Window " + frameNumber;
     }
 
+    public JToolBar getMainToolBar() {
+        return mainToolBar;
+    }
+
     public JPanel getMainPanel() {
         return mainPanel;
     }
