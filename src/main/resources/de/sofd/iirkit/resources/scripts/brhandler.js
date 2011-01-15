@@ -218,18 +218,16 @@ function doInitializeViewPanel(panel, seriesModel) {
     sssc.enabled = true;
 
     controllers.ptc = new JavaAdapter(ImageListViewPrintTextToCellsController, {
-        //TODO: apparently, JavaAdapter doesn't support overriding protected methods :-(
-        /*
         getTextToPrint: function(cell) {
+            print("GETTEXTTOPRINT!!!");
             var infoMode = panel.getAttribute("infoMode");
             if (!infoMode) { infoMode = 0; }
             if (infoMode == 0) {
-                return new String[0];
+                return java.lang.reflect.Array.newInstance(java.lang.String, 0);
             }
             var elt = cell.getDisplayedModelElement();
             var dicomImageMetaData = elt.getDicomImageMetaData();
             //"PN: " + dicomImageMetaData.getString(Tag.PatientName),
-            var indexStr = "" + cell.getOwner().getIndexOf(cell);
             if (infoMode == 1) {
                 return javaStrArr(
                             //cellTextListArray[panelIdx],
@@ -242,7 +240,7 @@ function doInitializeViewPanel(panel, seriesModel) {
                 }
                 return javaStrArr(
                             //cellTextListArray[panelIdx],
-                            "SL: " + " [" + indexStr + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
+                            "SL: " + " [" + cell.getOwner().getIndexOf(cell) + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "O: " + orientation,
                             "WL/WW: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
                             "Zoom: " + cell.getScale()
@@ -250,7 +248,6 @@ function doInitializeViewPanel(panel, seriesModel) {
                             );
             }
         }
-        */
     });
     controllers.ptc.controlledImageListView = listView;
     controllers.ptc.enabled = true;
@@ -279,7 +276,7 @@ function doInitializeViewPanel(panel, seriesModel) {
 
     toolbar.add(createAction("wRST", "Reset Windowing",
         function() {
-            controllers.wndAllController.runWithControllerInhibited(new java.lang.Runnable({
+            controllers.wndAllController.runWithControllerInhibited(new Runnable({
                 run: function() {
                     var selIdx = listView.getSelectedIndex();
                     if (selIdx >= 0 && selIdx < listView.getLength()) {
@@ -313,7 +310,7 @@ function doInitializeViewPanel(panel, seriesModel) {
     };
 
     toolbar.add(createAction("zRST", "Reset Zoom/Pan", function() {
-        controllers.zpAllController.runWithControllerInhibited(new java.lang.Runnable({
+        controllers.zpAllController.runWithControllerInhibited(new Runnable({
             run: function() {
                 var selIdx = listView.getSelectedIndex();
                 if (selIdx != -1 && listView.isVisibleIndex(selIdx)) {
@@ -323,7 +320,7 @@ function doInitializeViewPanel(panel, seriesModel) {
                     var cz = getUnscaledPreferredCellSize(cell);
                     var scalex = cellImgDisplaySize.width / cz.width;
                     var scaley = cellImgDisplaySize.height / cz.height;
-                    var scale = java.lang.Math.min(scalex, scaley);
+                    var scale = Math.min(scalex, scaley);
                     cell.setScale(scale);
                 }
             }
@@ -331,7 +328,7 @@ function doInitializeViewPanel(panel, seriesModel) {
      }));
 
     toolbar.add(createAction("zaRST", "Reset Zoom/Pan (All Images)", function() {
-        controllers.zpAllController.runWithControllerInhibited(new java.lang.Runnable({
+        controllers.zpAllController.runWithControllerInhibited(new Runnable({
             run: function() {
                 controllers.lazyZoomPanInitializationController.reset();
             }
@@ -403,6 +400,7 @@ function setWindowingToOptimal(cell) {
 
 function setWindowingToQC(cell) {
     //...
+    setWindowingToOptimal(cell);
 }
 
 function resetAllWindowing(panel) {
@@ -410,9 +408,9 @@ function resetAllWindowing(panel) {
     controllers.lazyWindowingToOptimalInitializationController.setEnabled(false);
     controllers.lazyWindowingToQCInitializationController.setEnabled(true);
     controllers.lazyWindowingToQCInitializationController.reset();
-    controllers.wndAllController.runWithControllerInhibited({run:function() {
+    controllers.wndAllController.runWithControllerInhibited(new Runnable({run:function() {
         controllers.lazyWindowingToQCInitializationController.initializeAllCellsImmediately(false);
-    }});
+    }}));
 }
 
 
