@@ -11,9 +11,14 @@ import de.sofd.viskit.controllers.MultiILVSyncSetController;
 import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
 import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Rectangle;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import org.apache.log4j.Logger;
@@ -39,6 +44,15 @@ class BRHandler {
 
     private Scriptable jsScope;
     private boolean isJsInitialized = false;
+    private AppConfig appConfig;
+
+    public AppConfig getAppConfig() {
+        return appConfig;
+    }
+
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
 
     /**
      * For use from Javascript.
@@ -47,6 +61,28 @@ class BRHandler {
      */
     public static void print(String s) {
         System.out.println(s);
+    }
+
+    private Reader getBrHandlerJsReader() throws IOException {
+        File jsFile = new File(appConfig.getBaseDir(), "brhandler.js");
+        if (jsFile.exists()) {
+            return new InputStreamReader(new FileInputStream(jsFile), "utf-8");
+        } else {
+            //create the file by copying the one from our classpath
+            Writer out = new OutputStreamWriter(new FileOutputStream(jsFile), "utf-8");
+            try {
+                Reader in = new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("de/sofd/iirkit/resources/scripts/brhandler.js"), "utf-8");
+                char[] buf = new char[5000];
+                int n = in.read(buf);
+                while (n >= 0) {
+                    out.write(buf, 0, n);
+                    n = in.read(buf);
+                }
+            } finally {
+                out.close();
+            }
+            return new InputStreamReader(new FileInputStream(jsFile), "utf-8");
+        }
     }
 
     /**
@@ -63,7 +99,7 @@ class BRHandler {
                 if (!isJsInitialized) {
                     try {
                         jsScopeTmp.defineFunctionProperties(new String[]{"print"}, BRHandler.class, ScriptableObject.DONTENUM);
-                        Reader r = new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream("de/sofd/iirkit/resources/scripts/brhandler.js"), "utf-8");
+                        Reader r = getBrHandlerJsReader();
                         cx.evaluateReader(jsScopeTmp, r, "brHandler", 1, null);
                         //cx.evaluateString(jsScopeTmp, "print('HELLO FROM JS'); function caseStarting(ctx) { print('CASE STARTING'); }", "<cmd>", 1, null);
                     } catch (IOException ex) {

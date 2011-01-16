@@ -24,9 +24,17 @@ public class App extends SingleFrameApplication {
         System.setProperty("sun.awt.exception.handler", AwtExceptionHandler.class.getName());
         //TODO: QT thread exception handler?
 
+        //this spring crap is really overdesigned -- IoC would better be done manually,
+        //creating and wiring up all the "beans" from here directly
+
         ApplicationContext ctx = new ClassPathXmlApplicationContext("/spring-beans.xml");
         IirService iirSvc = (IirService) ctx.getBean("iirService");
         SecurityContext secCtx = (SecurityContext) ctx.getBean("securityContext");
+
+        AppConfig appConfig = (AppConfig) ctx.getBean("appConfig");
+        //TODO: possibly modify appConfig.baseDirName from some command line parameter
+
+        BRHandler brHandler = (BRHandler) ctx.getBean("brHandler");
 
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
@@ -41,7 +49,7 @@ public class App extends SingleFrameApplication {
 
         System.out.println("user=" + secCtx.getUser() + ", authority=" + secCtx.getAuthority());
 
-        SessionControlDialog sessionSelectionDialog = new SessionControlDialog(this, iirSvc, secCtx, dummyFrame, true);
+        SessionControlDialog sessionSelectionDialog = new SessionControlDialog(this, iirSvc, brHandler, secCtx, dummyFrame, true);
         sessionSelectionDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
         sessionSelectionDialog.setVisible(true);
     }

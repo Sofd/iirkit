@@ -29,10 +29,10 @@ public class SessionControlDialog extends javax.swing.JDialog {
     private CaseRunner caseRunner;
 
     /** Creates new form SessionSelectionDialog */
-    public SessionControlDialog(App app, IirService iirSvc, SecurityContext securityCtx, java.awt.Frame parent, boolean modal) {
+    public SessionControlDialog(App app, IirService iirSvc, BRHandler brHandler, SecurityContext securityCtx, java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         this.app = app;
-        caseRunner = new CaseRunner(app);
+        caseRunner = new CaseRunner(app, brHandler);
         initComponents();
 
         this.iirService = iirSvc;

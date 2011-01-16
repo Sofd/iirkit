@@ -23,6 +23,14 @@
 
 	<context:property-placeholder location="/iir.properties" />
 
+    <bean id="appConfig" class="de.sofd.iirkit.AppConfig">
+        <property name="baseDirName" value="." />
+    </bean>
+
+    <bean id="brHandler" class="de.sofd.iirkit.BRHandler">
+        <property name="appConfig" ref="appConfig" />
+    </bean>
+
     <!-- DataSource with connection pool. -->
 	<bean id="dataSource"
 		class="org.springframework.jdbc.datasource.DriverManagerDataSource">

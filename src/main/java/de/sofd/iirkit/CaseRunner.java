@@ -31,7 +31,7 @@ public class CaseRunner implements BRContext {
 
     private Case currentCase;
     private final List<ChangeListener> caseFinishedListeners = new LinkedList<ChangeListener>(); //TODO: specific "CaseDoneEvent"
-    private final BRHandler brHandler = new BRHandler();
+    private final BRHandler brHandler;
     private final App app;
 
     private final DicomModelFactory modelFactory;
@@ -40,8 +40,9 @@ public class CaseRunner implements BRContext {
     private final List<BRFrameView> frames = new ArrayList<BRFrameView>();
     private final FormRunner formRunner;
 
-    public CaseRunner(App app) {
+    public CaseRunner(App app, BRHandler brHandler) {
         this.app = app;
+        this.brHandler = brHandler;
         formRunner = new FormRunner(app);
         modelFactory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
         modelFactory.setSupportMultiframes(false);
