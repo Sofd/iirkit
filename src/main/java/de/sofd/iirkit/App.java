@@ -1,8 +1,10 @@
 package de.sofd.iirkit;
 
+import de.sofd.iirkit.service.CsvIirServiceImpl;
 import de.sofd.iirkit.service.IirService;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.io.File;
 import javax.swing.JFrame;
 import org.apache.log4j.Logger;
 import org.jdesktop.application.SingleFrameApplication;
@@ -12,7 +14,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App extends SingleFrameApplication {
 
-    static final Logger logger = Logger.getLogger(SingleFrameApplication.class);
+    static final Logger logger = Logger.getLogger(App.class);
 
     /**
      * At startup create and show the main frame of the application.
@@ -28,11 +30,14 @@ public class App extends SingleFrameApplication {
         //creating and wiring up all the "beans" from here directly
 
         ApplicationContext ctx = new ClassPathXmlApplicationContext("/spring-beans.xml");
-        IirService iirSvc = (IirService) ctx.getBean("iirService");
-        SecurityContext secCtx = (SecurityContext) ctx.getBean("securityContext");
 
         AppConfig appConfig = (AppConfig) ctx.getBean("appConfig");
         //TODO: possibly modify appConfig.baseDirName from some command line parameter
+
+        //IirService iirSvc = (IirService) ctx.getBean("iirService");
+        IirService iirSvc = new CsvIirServiceImpl(new File(appConfig.getBaseDir(), "user.csv"), new File(appConfig.getBaseDir(), "case.csv"));
+
+        SecurityContext secCtx = (SecurityContext) ctx.getBean("securityContext");
 
         BRHandler brHandler = (BRHandler) ctx.getBean("brHandler");
 

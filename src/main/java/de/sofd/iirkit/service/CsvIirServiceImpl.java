@@ -34,8 +34,12 @@ public class CsvIirServiceImpl implements IirService {
     private final File userCsvFile, caseCsvFile;
 
     public CsvIirServiceImpl(String userCsvFileName, String caseCsvFileName) {
-        userCsvFile = new File(userCsvFileName);
-        caseCsvFile = new File(caseCsvFileName);
+        this(new File(userCsvFileName), new File(caseCsvFileName));
+    }
+
+    public CsvIirServiceImpl(File userCsvFile, File caseCsvFile) {
+        this.userCsvFile = userCsvFile;
+        this.caseCsvFile = caseCsvFile;
         //for error reportage
         File file = null;
         int lineNo = -1;
