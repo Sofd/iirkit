@@ -24,7 +24,7 @@ package org.apache.commons.csv;
  * grows as necessary.
  * This class is not thread safe.
  * 
- * @author Ortwin Glück
+ * @author Ortwin Gl\u00FCck
  */
 public class CharBuffer {
     private char[] c;
