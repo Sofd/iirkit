@@ -37,7 +37,7 @@ public class CsvTest {
         printer.println();
         printer.print("tralala");
         printer.print("23");
-        printer.print("goodbye");
+        printer.print(""/*null triggers NPE*/);
         printer.println();
     }
 }

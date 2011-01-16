@@ -2,12 +2,17 @@ package de.sofd.iirkit.service;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
 import org.apache.log4j.Logger;
 
 /**
@@ -199,7 +204,11 @@ public class CsvIirServiceImpl implements IirService {
             if (c2.getUser().equals(c.getUser()) && c2.getNumber() == c.getNumber()) {
                 c2.setHangingProtocol(c.getHangingProtocol());
                 c2.setResult(c.getResult());
-                persistDatabase();
+                try {
+                    persistDatabase();
+                } catch (IOException ex) {
+                    throw new RuntimeException("failed to persist data to CSV file: " + ex.getLocalizedMessage(), ex);
+                }
                 //TODO: c2 should be updated only here to ensure consistency (i.e. no change to in-memory DB if persisting failed)
                 return 1;
             }
@@ -207,8 +216,30 @@ public class CsvIirServiceImpl implements IirService {
         return 0;
     }
 
-    private void persistDatabase() {
-        //TODO!!!
+    private void persistDatabase() throws IOException {
+        File caseTmpFile = new File(caseCsvFile.getParentFile(), caseCsvFile.getName() + ".new");
+        caseTmpFile.createNewFile();
+        Writer w = new OutputStreamWriter(new FileOutputStream(caseTmpFile), "utf-8");
+        try {
+            CSVPrinter printer = new CSVPrinter(w);
+            printer.println(new String[]{"user","case","hangingProtocol","result"});
+            for (Case c : cases) {
+                printer.print(c.getUser().getName());
+                printer.print("" + c.getNumber());
+                printer.print(nonNull(c.getHangingProtocol()));
+                printer.print(nonNull(c.getResult()));
+                printer.println();
+            }
+        } finally {
+            w.close();
+        }
+        if (!caseTmpFile.renameTo(caseCsvFile)) {
+            throw new IOException("failed to rename new to old file after writing case CSV list");
+        }
+    }
+
+    private static String nonNull(String s) {
+        return s == null ? "" : s;
     }
 
 }
