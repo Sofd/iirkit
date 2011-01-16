@@ -37,7 +37,9 @@ public class App extends SingleFrameApplication {
         //IirService iirSvc = (IirService) ctx.getBean("iirService");
         IirService iirSvc = new CsvIirServiceImpl(new File(appConfig.getBaseDir(), "user.csv"), new File(appConfig.getBaseDir(), "case.csv"));
 
-        SecurityContext secCtx = (SecurityContext) ctx.getBean("securityContext");
+        //SecurityContext secCtx = (SecurityContext) ctx.getBean("securityContext");
+        SecurityContext secCtx = new SecurityContext();
+        secCtx.setIirService(iirSvc);
 
         BRHandler brHandler = (BRHandler) ctx.getBean("brHandler");
 

@@ -31,6 +31,43 @@
         <property name="appConfig" ref="appConfig" />
     </bean>
 
-<!--    <context:component-scan base-package="de/sofd/*"/>-->
+    <!-- DataSource with connection pool. -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName" value="org.hsqldb.jdbc.JDBCDriver" />
+		<property name="url" value="jdbc:hsqldb:file:${dbPath}" />
+		<property name="username" value="olaf" />
+		<property name="password" value="" />
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+		<property name="globalRollbackOnParticipationFailure" value="false" />
+	</bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager" />
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+
+    <bean id="iirService" class="de.sofd.iirkit.service.HsqlIirServiceImpl">
+        <constructor-arg ref="jdbcTemplate"/>
+    </bean>
+
+    <!--
+	<bean id="dataSourceInitializer"
+		class="org.springframework.jdbc.datasource.init.DataSourceInitializer">
+		<property name="dataSource" ref="dataSource" />
+		<property name="DatabasePopulator" ref="iirService" />
+	</bean>
+    -->
+
+    <jdbc:initialize-database data-source="dataSource">
+        <jdbc:script location="classpath:hsql-init.sql"/>
+    </jdbc:initialize-database>
+
+    <context:component-scan base-package="de.sofd" />
 
 </beans>
