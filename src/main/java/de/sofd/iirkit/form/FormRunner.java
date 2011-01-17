@@ -134,7 +134,12 @@ public class FormRunner {
 
 
     public void disposeFrame() {
-
+        QApplication.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                formFrame.close();
+            }
+        });
     }
 
     public void cancel() {
