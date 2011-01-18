@@ -3,13 +3,6 @@ package de.sofd.iirkit;
 import de.sofd.iirkit.form.FormFrame;
 import de.sofd.lang.Function2;
 import de.sofd.lang.Runnable2;
-import de.sofd.viskit.controllers.ImageListViewInitialWindowingController;
-import de.sofd.viskit.controllers.ImageListViewInitialZoomPanController;
-import de.sofd.viskit.controllers.ImageListViewWindowingApplyToAllController;
-import de.sofd.viskit.controllers.ImageListViewZoomPanApplyToAllController;
-import de.sofd.viskit.controllers.MultiILVSyncSetController;
-import de.sofd.viskit.controllers.cellpaint.ImageListViewPrintTextToCellsController;
-import de.sofd.viskit.ui.imagelist.JImageListView;
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,7 +12,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import javax.swing.JToolBar;
 import javax.swing.ListModel;
 import org.apache.log4j.Logger;
 import org.mozilla.javascript.Context;
@@ -145,26 +137,6 @@ class BRHandler {
                 }
             }
         });
-    }
-
-    private final MultiILVSyncSetController multiSyncSetController = new MultiILVSyncSetController();
-
-    private boolean useDynamicListsCount = (null != System.getProperty("iirkit.useDynamicListsCount"));
-    private boolean useJ2DInFrameViews = true; //(null != System.getProperty("iirkit.useJ2DInFrameViews"));
-    private boolean useInlineEnlargedView = (null != System.getProperty("iirkit.useInlineEnlargedView"));
-
-    private static class PanelUIElements {
-        JImageListView listView;
-        JToolBar syncButtonsToolbar;
-    }
-
-    private static class PanelControllers {
-        ImageListViewInitialWindowingController lazyWindowingToOptimalInitializationController;
-        ImageListViewInitialWindowingController lazyWindowingToQCInitializationController;
-        ImageListViewInitialZoomPanController lazyZoomPanInitializationController;
-        ImageListViewWindowingApplyToAllController wndAllController;
-        ImageListViewZoomPanApplyToAllController zpAllController;
-        ImageListViewPrintTextToCellsController ptc;
     }
 
     /**
