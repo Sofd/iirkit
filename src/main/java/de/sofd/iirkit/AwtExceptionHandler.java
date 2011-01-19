@@ -20,6 +20,7 @@ public class AwtExceptionHandler {
     public void handle(Throwable throwable) {
         try {
             if (throwable != null) {
+                logger.error("handle - throwable != null", throwable);
                 ////hacks to try to extract the root exception message for displaying better error messages
                 String displayErrorMsg = throwable.getLocalizedMessage();
                 if (throwable instanceof Error) {
@@ -41,7 +42,6 @@ public class AwtExceptionHandler {
                     }
                 }
                 JOptionPane.showMessageDialog(new JFrame(), displayErrorMsg +  " " + StringUtils.trimToEmpty(message), "Error", JOptionPane.ERROR_MESSAGE);
-                logger.error("handle - throwable != null", throwable);
                 Toolkit.getDefaultToolkit().beep();
                 System.exit(1);
             }

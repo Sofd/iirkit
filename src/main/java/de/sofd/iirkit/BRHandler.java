@@ -189,7 +189,7 @@ class BRHandler {
 
     Rectangle getFormFrameBounds(BRContext brContext) {
         Wrapper wrapper = (Wrapper) callJsFunction("getFormFrameBounds", brContext);
-        return (Rectangle) wrapper.unwrap();
+        return wrapper == null ? null : (Rectangle) wrapper.unwrap();
     }
 
     void initializeFormFrame(FormFrame formFrame, BRContext brContext) {
