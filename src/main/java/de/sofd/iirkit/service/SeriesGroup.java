@@ -29,7 +29,7 @@ public class SeriesGroup {
         try {
             File baseDir = new File(baseDirName);
             if (!(baseDir.exists() && baseDir.isDirectory())) {
-                throw new IllegalStateException("invalid base dir: " + baseDirName);
+                throw new IllegalStateException("absent/invalid series group directory: " + baseDirName);
             }
             for (File f : baseDir.listFiles()) {
                 if (f.isDirectory()) {
