@@ -14,11 +14,10 @@ public class Case {
 
     protected int number;
     protected User user;
-    protected String hangingProtocol;
     protected List<String> seriesGroupUrls;
     protected String ecrfUrl;
     protected String result;
-    protected HangingProtocol hpObject;
+    protected HangingProtocol hp;
     protected Map<String, String> allAttrs;
 
     public static final String ATTR_NAME_USER = "user";
@@ -100,11 +99,11 @@ public class Case {
      *
      * @return
      */
-    public HangingProtocol getHangingProtocolObject() {
-        if (null == hpObject) {
-            hpObject = new HangingProtocol(getSeriesGroupUrls(), getEcrfUrl());
+    public HangingProtocol getHangingProtocol() {
+        if (null == hp) {
+            hp = new HangingProtocol(getSeriesGroupUrls(), getEcrfUrl());
         }
-        return hpObject;
+        return hp;
     }
 
     /**
@@ -155,7 +154,7 @@ public class Case {
 
     @Override
     public String toString() {
-        return "[Case: nr=" + getNumber() + ", hp=" + getHangingProtocolObject() + ", res=" + getResult() + "]";
+        return "[Case: nr=" + getNumber() + ", hp=" + getHangingProtocol() + ", res=" + getResult() + "]";
     }
 
 }

@@ -61,7 +61,7 @@ public class CaseRunner implements BRContext {
     }
 
     protected void initializeFramesFor(Case c) {
-        HangingProtocol hp = c.getHangingProtocolObject();
+        HangingProtocol hp = c.getHangingProtocol();
         int nExistingFrames = frames.size();
         int nSerGrps = hp.getSeriesGroups().size();
         //create/dispose frames as necessary to match up
@@ -97,7 +97,7 @@ public class CaseRunner implements BRContext {
                 brHandler.initializeFormFrame(formRunner.getFormFrame(), CaseRunner.this);
             }
         });
-        formRunner.start(c.getHangingProtocolObject().getEcrfUrl(), brHandler.getFormFrameBounds(this));
+        formRunner.start(c.getHangingProtocol().getEcrfUrl(), brHandler.getFormFrameBounds(this));
         formRunner.addFormDoneListener(new FormDoneListener() {
             @Override
             public void formSubmitted(FormDoneEvent event) {
@@ -117,7 +117,7 @@ public class CaseRunner implements BRContext {
     }
 
     protected void initializeViewPanelsFor(Case c, BRFrameView frame, int frameNo) {
-        HangingProtocol hp = c.getHangingProtocolObject();
+        HangingProtocol hp = c.getHangingProtocol();
         SeriesGroup serGrp = hp.getSeriesGroups().get(frameNo);
         int i;
         //create new lists if necessary (we never delete once-created lists, only remove them from the layout)

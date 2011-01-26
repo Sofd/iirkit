@@ -130,7 +130,7 @@ public class CsvIirServiceImpl implements IirService {
                     String ecrfUrl = colVals.get(Case.ATTR_NAME_ECRF);
                     Case c = new Case(caseNr, seriesGroupUrls, ecrfUrl, res, colVals);
                     c.setUser(user);
-                    c.getHangingProtocolObject();  //force checking for presence of all the URLs
+                    c.getHangingProtocol();  //force checking for presence of all the URLs
                     cases.add(c);
                 }
             }

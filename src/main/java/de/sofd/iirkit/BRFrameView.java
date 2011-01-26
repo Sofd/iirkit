@@ -171,6 +171,13 @@ public class BRFrameView extends FrameView {
         viewPanels.add(p);
     }
 
+    /**
+     * The number of viewPanels (out of #getViewPanels()) that are currently
+     * active (i.e. not deactivated). The active frames are those that
+     * correspond to series in the frame's current series group.
+     *
+     * @param count
+     */
     void setActiveViewPanelsCount(int count) {
         assert(count <= viewPanels.size());
         activeViewPanels = Collections.unmodifiableList(viewPanels.subList(0, count));
@@ -213,6 +220,13 @@ public class BRFrameView extends FrameView {
         return attributes.get(name);
     }
 
+    /**
+     * Put arbitrary data into the frame. For use in scripts.
+     *
+     * @param name
+     * @param value
+     * @return
+     */
     public Object putAttribute(String name, Object value) {
         return attributes.put(name, value);
     }

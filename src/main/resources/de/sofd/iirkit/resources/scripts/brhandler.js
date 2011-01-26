@@ -1,3 +1,7 @@
+var enableROIs = true;
+var enableMouseMeasurements = true;
+
+
 importPackage(java.lang);
 importClass(java.io.File);
 importClass(Packages.de.sofd.iirkit.form.FormFrame);
@@ -5,6 +9,7 @@ importClass(Packages.de.sofd.iirkit.service.SeriesGroup);
 importPackage(Packages.de.sofd.viskit.controllers);
 importPackage(Packages.de.sofd.viskit.controllers.cellpaint);
 importPackage(Packages.de.sofd.viskit.model);
+importPackage(Packages.de.sofd.viskit.ui);
 importClass(Packages.de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView);
 importClass(Packages.de.sofd.viskit.util.DicomUtil);
 importClass(Packages.java.awt.BorderLayout);
@@ -69,6 +74,22 @@ function newJavaStrArr() {
     return result;
 }
 
+function newJavaArr(javaClass) {
+    var result = java.lang.reflect.Array.newInstance(javaClass, arguments.length - 1);
+    //arguments is not an array :-\
+    for (var i=1; i<arguments.length; i++) {
+        result[i-1] = arguments[i];
+    }
+    return result;
+}
+
+function jsToJavaArr(jsArr, javaClass) {
+    var result = java.lang.reflect.Array.newInstance(javaClass, jsArr.length);
+    for (i in jsArr) {
+        result[i] = jsArr[i];
+    }
+    return result;
+}
 
 function createAction(name, tooltip, callback) {
     var result = new JavaAdapter(AbstractAction, ActionListener, {
@@ -130,6 +151,7 @@ function initializeFrame(frame, frameNo, brContext) {
     }
     frame.frame.title = "Window " + frameNo;
     frame.frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE;
+    frame.putAttribute("ui", {});
     frame.putAttribute("isInitialized", "true");
 }
 
@@ -234,8 +256,12 @@ function doInitializeViewPanel(panel, seriesModel, brContext) {
 
     new ImageListViewMouseWindowingController(listView);
     new ImageListViewMouseZoomPanController(listView).doubleClickResetEnabled = false;
-    new ImageListViewRoiInputEventController(listView);
     new ImageListViewImagePaintController(listView).enabled = true;
+    new ImageListViewInitStateIndicationPaintController(listView);
+    if (enableROIs) {
+        new ImageListViewRoiInputEventController(listView);
+        new ImageListViewRoiPaintController(listView).setEnabled(true);
+    }
 
     sssc = new ImageListViewSelectionScrollSyncController(listView);
     sssc.scrollPositionTracksSelection = true;
@@ -252,32 +278,24 @@ function doInitializeViewPanel(panel, seriesModel, brContext) {
             }
             var elt = cell.getDisplayedModelElement();
             var dicomImageMetaData = elt.getDicomImageMetaData();
-            //"PN: " + dicomImageMetaData.getString(Tag.PatientName),
-            if (infoMode == 1) {
-                return newJavaStrArr(
-                            //cellTextListArray[panelIdx],
-                            //cellTextListArraySecret[panelIdx],
-                            );
-            } else {
-                var orientation = elt.getAttribute("orientationPreset");
-                if (!orientation) {
-                    orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
-                }
-                return newJavaStrArr(
-                            //cellTextListArray[panelIdx],
-                            "SL: " + " [" + cell.getOwner().getIndexOf(cell) + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
-                            "O: " + orientation,
-                            "WL/WW: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
-                            "Zoom: " + cell.getScale()
-                            //cellTextListArraySecret[panelIdx],
-                            );
+            var orientation = elt.getAttribute("orientationPreset");
+            if (!orientation) {
+                orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
             }
+            return newJavaStrArr(
+                        "SL: " + " [" + cell.getOwner().getIndexOf(cell) + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
+                        "O: " + orientation,
+                        "WL/WW: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
+                        "Zoom: " + cell.getScale()
+                        );
         }
     });
     controllers.ptc.controlledImageListView = listView;
     controllers.ptc.enabled = true;
 
-    new ImageListViewMouseMeasurementController(listView).enabled = true;
+    if (enableMouseMeasurements) {
+        new ImageListViewMouseMeasurementController(listView).enabled = true;
+    }
 
     var toolbar = new JToolBar();
     toolbar.floatable = false;
@@ -452,6 +470,8 @@ function caseStartingPostFrameInitialization(brContext) {
     //there is one frame per series group; the frames correspond 1:1 to the seriesGroups
 
     frames.foreach(function(frame) {
+        var frameUi = frame.getAttribute("ui");
+        frameUi.listViews = [];
         frame.getActiveViewPanels().toArray().foreach(function(vp) {
             var ui = vp.getAttribute("ui");
             if (ui.listView.getLength() > 0) {
@@ -464,6 +484,7 @@ function caseStartingPostFrameInitialization(brContext) {
                     multiSyncSetController.getSyncSet(orientation).addList(ui.listView);
                 }
             }
+            frameUi.listViews.push(ui.listView);
         });
     });
 
@@ -513,6 +534,13 @@ function caseStartingPostFrameInitialization(brContext) {
             });
         }));
         frameView.mainToolBar.addSeparator();
+        if (enableROIs) {
+            var frameUi = frameView.getAttribute("ui");
+            var roiToolPanel = new RoiToolPanel();
+            frameView.mainToolBar.add(roiToolPanel);
+            new ImageListViewRoiToolApplicationController(frameUi.listViews).setRoiToolPanel(roiToolPanel);
+            frameView.mainToolBar.addSeparator();
+        }
         frameView.mainToolBar.add(new JLabel("Sync: "));
         orientations.foreach(function(orientation) {
             var syncSet = multiSyncSetController.getSyncSet(orientation);
