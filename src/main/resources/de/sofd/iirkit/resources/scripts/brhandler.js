@@ -1,9 +1,10 @@
 importPackage(java.lang);
+importClass(java.io.File);
 importClass(Packages.de.sofd.iirkit.form.FormFrame);
 importClass(Packages.de.sofd.iirkit.service.SeriesGroup);
 importPackage(Packages.de.sofd.viskit.controllers);
 importPackage(Packages.de.sofd.viskit.controllers.cellpaint);
-importClass(Packages.de.sofd.viskit.ui.imagelist.glimpl.JGLImageListView);
+importPackage(Packages.de.sofd.viskit.model);
 importClass(Packages.de.sofd.viskit.ui.imagelist.gridlistimpl.JGridImageListView);
 importClass(Packages.de.sofd.viskit.util.DicomUtil);
 importClass(Packages.java.awt.BorderLayout);
@@ -92,6 +93,11 @@ function caseStarting(brContext) {
 var screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 var nScreens = screens.length;
 
+var modelFactory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+modelFactory.setSupportMultiframes(false);
+modelFactory.setCheckFileReadability(false);
+modelFactory.setAsyncMode(false);
+
 /**
  * Called once per
  * frame and case (and thus potentially multiple times per frame, as frames
@@ -151,7 +157,6 @@ function initializeFormFrame(formFrame, brContext) {
 
 var multiSyncSetController = new MultiILVSyncSetController();
 var useDynamicListsCount = System.getProperty("iirkit.useDynamicListsCount");
-var useJ2DInFrameViews = true; //java.lang.System.getProperty("iirkit.useJ2DInFrameViews");
 var useInlineEnlargedView = System.getProperty("iirkit.useInlineEnlargedView");
 
 /**
@@ -160,13 +165,17 @@ var useInlineEnlargedView = System.getProperty("iirkit.useInlineEnlargedView");
  * was/is called for the frame that the vie panel belongs to).
  * <p>
  * A view panel is the rectangular panel in a frame that normally displays a series.
- * The seriesModel parameter is the ListModel that holds the series data. The function
- * should usually create a view for that model in the panel, and possibly one or more
- * UI elements like toolbar buttons that perform operations on the view.
+ * The seriesUrl parameter is name of the directory containing the DICOM images of the series.
+ * The function should usually create a containing those images in the panel, and possibly
+ * one or more UI elements like toolbar buttons that perform operations on the view.
  *
- * You may place arbitrary data into the panel using panel,putAttribute(key,value)/getAttribute(key)
+ * You may place arbitrary data into the panel using panel.putAttribute(key,value)/getAttribute(key)
  */
-function initializeViewPanel(panel, seriesModel, brContext) {
+function initializeViewPanel(panel, seriesUrl, brContext) {
+    if (null == modelFactory.getModel(seriesUrl)) {
+        modelFactory.addModel(seriesUrl, new File(seriesUrl));
+    }
+    var seriesModel = modelFactory.getModel(seriesUrl);
     if (!panel.getAttribute("ui")) {
         doInitializeViewPanel(panel, seriesModel, brContext);
     }
@@ -187,14 +196,10 @@ function resetViewPanel(panel, brContext) {
 
 function doInitializeViewPanel(panel, seriesModel, brContext) {
     panel.setLayout(new BorderLayout());
-    var listView;
-    if (useJ2DInFrameViews) {
-        listView = new JGridImageListView();
-        listView.scaleMode = new JGridImageListView.MyScaleMode(1, 1);
-    } else {
-        listView = new JGLImageListView();
-        listView.scaleMode = new JGLImageListView.MyScaleMode(1, 1);
-    }
+    var listView = new JGridImageListView();
+    listView.scaleMode = new JGridImageListView.MyScaleMode(1, 1);
+    //listView = new JGLImageListView();
+    //listView.scaleMode = new JGLImageListView.MyScaleMode(1, 1);
 
     var ui = {};
     panel.putAttribute("ui", ui);

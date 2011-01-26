@@ -168,8 +168,8 @@ class BRHandler {
         callJsFunction("initializeFormFrame", formFrame, brContext);
     }
 
-    void initializeViewPanel(BRViewPanel panel, ListModel/*or ModelFactory+key?*/ seriesModel, BRContext brContext) {
-        callJsFunction("initializeViewPanel", panel, seriesModel, brContext);
+    void initializeViewPanel(BRViewPanel panel, String seriesUrl, BRContext brContext) {
+        callJsFunction("initializeViewPanel", panel, seriesUrl, brContext);
     }
 
     /**
