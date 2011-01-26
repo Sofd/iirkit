@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +45,6 @@ public class CsvIirServiceImpl implements IirService {
         File file = null;
         int lineNo = -1;
         try {
-            //TODO: check for caseNumber (must be contiguous)
             //TODO: more flexibility: variable column order, arbitrary additional columns
             {
                 file = userCsvFile;
@@ -67,6 +67,7 @@ public class CsvIirServiceImpl implements IirService {
                 CSVParser p = new CSVParser(new InputStreamReader(new FileInputStream(caseCsvFile), "utf-8"));
                 lineNo = 1;
                 String[] line = p.getLine(); // skip headers
+                Map<String, Integer> lastCaseNrByUserName = new HashMap<String, Integer>(); //for checking for of caseNr continuity
                 while (null != (line = p.getLine())) {
                     ++lineNo;
                     if (line.length < 4) {
@@ -77,11 +78,20 @@ public class CsvIirServiceImpl implements IirService {
                     if (null == user) {
                         throw new IllegalArgumentException("unknown user: " + userName);
                     }
+                    int caseNr = Integer.parseInt(line[1]);
+                    Integer lastCaseNr = lastCaseNrByUserName.get(userName);
+                    if (null == lastCaseNr) {
+                        lastCaseNr = 0;
+                    }
+                    if (caseNr != lastCaseNr + 1) {
+                        throw new IllegalArgumentException("Non-continuous case number for user " + userName + ": found: " + caseNr + ", expected: " + (lastCaseNr + 1));
+                    }
+                    lastCaseNrByUserName.put(userName, caseNr);
                     String res = line[3];
                     if ("".equals(res)) {
                         res = null;
                     }
-                    Case c = new Case(Integer.parseInt(line[1]), line[2], res);
+                    Case c = new Case(caseNr, line[2], res);
                     c.setUser(user);
                     cases.add(c);
                 }
