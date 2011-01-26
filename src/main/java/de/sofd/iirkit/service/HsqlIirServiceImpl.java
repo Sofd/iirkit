@@ -2,6 +2,7 @@ package de.sofd.iirkit.service;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataAccessException;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author olaf
  */
 public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
+    //TODO: untested with the new Case API/attributes. Doesn't store the arbitrary Case#getAllAttributes.
 
     protected static Logger logger = Logger.getLogger(HsqlIirServiceImpl.class);
 
@@ -38,7 +40,7 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
             if ("".equals(res)) {
                 res = null;
             }
-            return new Case(rs.getInt("caseNr"), rs.getString("hangingProtocol"), res);
+            return new Case(rs.getInt("caseNr"), Arrays.asList(rs.getString("seriesGroupUrls").split(",")), rs.getString("ecrfUrl"), res);
         }
     }
 
@@ -105,7 +107,7 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     @Override
     public int update(Case c) {
-        return jdbcTemplate.update("update iircase set hangingProtocol=?, result=? where userName=? and caseNr=?", c.getHangingProtocol(), c.getResult(), c.getUser().getName(), c.getNumber());
+        return jdbcTemplate.update("update iircase set seriesGroupUrls=?, ecrfUrl=?, result=? where userName=? and caseNr=?", c.getSeriesGroupUrls(), c.getEcrfUrl(), c.getResult(), c.getUser().getName(), c.getNumber());
     }
 
     public static <T> T queryForZeroOrOneObject(SimpleJdbcTemplate templ, String sql, RowMapper<T> rm, Object... args) throws DataAccessException {

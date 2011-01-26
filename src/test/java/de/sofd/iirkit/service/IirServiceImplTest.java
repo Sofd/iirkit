@@ -1,8 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package de.sofd.iirkit.service;
 
 import java.util.List;
@@ -74,11 +69,11 @@ public class IirServiceImplTest extends TestCase {
         User olaf = svc.getUser("olaf");
         List<Case> cases = svc.getCasesOf(olaf);
         assertEquals(6, cases.size());
-        cases.get(0).getHangingProtocol().startsWith("c");
+        cases.get(0).getEcrfUrl().startsWith("c");
         User hans = svc.getUser("hans");
         cases = svc.getCasesOf(hans);
         assertEquals(5, cases.size());
-        cases.get(0).getHangingProtocol().startsWith("hc");
+        cases.get(0).getEcrfUrl().startsWith("hc");
     }
 
     public void testGetNextCaseOf() {
@@ -86,11 +81,11 @@ public class IirServiceImplTest extends TestCase {
         User olaf = svc.getUser("olaf");
         Case c = svc.getNextCaseOf(olaf);
         assertEquals(3, c.getNumber());
-        assertEquals("c3hp", c.getHangingProtocol());
+        assertEquals("c3hp", c.getEcrfUrl());
         User hans = svc.getUser("hans");
         c = svc.getNextCaseOf(hans);
         assertEquals(4, c.getNumber());
-        assertEquals("hc4hp", c.getHangingProtocol());
+        assertEquals("hc4hp", c.getEcrfUrl());
     }
 
     public void testGetUser() {
@@ -115,36 +110,36 @@ public class IirServiceImplTest extends TestCase {
         User hans = svc.getUser("hans");
         Case c = svc.getNextCaseOf(olaf);
         assertEquals(3, c.getNumber());
-        assertEquals("c3hp", c.getHangingProtocol());
+        assertEquals("c3hp", c.getEcrfUrl());
         assertNull(c.getResult());
         c.setResult("res3");
         assertEquals("res3", c.getResult());
         svc.update(c);
         c = svc.getNextCaseOf(hans);
         assertEquals(4, c.getNumber());
-        assertEquals("hc4hp", c.getHangingProtocol());
+        assertEquals("hc4hp", c.getEcrfUrl());
         assertNull(c.getResult());
         c.setResult("hres4");
         assertEquals("hres4", c.getResult());
         svc.update(c);
         c = svc.getNextCaseOf(hans);
         assertEquals(5, c.getNumber());
-        assertEquals("hc5hp", c.getHangingProtocol());
+        assertEquals("hc5hp", c.getEcrfUrl());
         c = svc.getNextCaseOf(olaf);
         assertEquals(4, c.getNumber());
-        assertEquals("c4hp", c.getHangingProtocol());
+        assertEquals("c4hp", c.getEcrfUrl());
         assertNull(c.getResult());
         c.setResult("res4");
         svc.update(c);
         c = svc.getNextCaseOf(olaf);
         assertEquals(5, c.getNumber());
-        assertEquals("c5hp", c.getHangingProtocol());
+        assertEquals("c5hp", c.getEcrfUrl());
         assertNull(c.getResult());
         c.setResult("res5");
         svc.update(c);
         c = svc.getNextCaseOf(olaf);
         assertEquals(6, c.getNumber());
-        assertEquals("c6hp", c.getHangingProtocol());
+        assertEquals("c6hp", c.getEcrfUrl());
         assertNull(c.getResult());
         c.setResult("res6");
         svc.update(c);

@@ -1,7 +1,9 @@
 package de.sofd.iirkit.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,25 +15,29 @@ public class Case {
     protected int number;
     protected User user;
     protected String hangingProtocol;
-    protected HangingProtocol hpObject;
+    protected List<String> seriesGroupUrls;
+    protected String ecrfUrl;
     protected String result;
+    protected HangingProtocol hpObject;
     protected Map<String, String> allAttrs;
 
-    public static final String ATTR_NAME_USER   = "user";
-    public static final String ATTR_NAME_CASE   = "case";
-    public static final String ATTR_NAME_HP     = "hangingProtocol";
+    public static final String ATTR_NAME_USER = "user";
+    public static final String ATTR_NAME_CASE = "case";
+    public static final String ATTR_NAME_SERIES_GROUP = "seriesGroup";
+    public static final String ATTR_NAME_ECRF = "ecrf";
     public static final String ATTR_NAME_RESULT = "result";
 
-    public Case(int number, String hangingProtocol, String result) {
-        this(number, hangingProtocol, result, null);
+    public Case(int number, List<String> seriesGroupUrls, String ecrfUrl, String result) {
+        this(number, seriesGroupUrls, ecrfUrl, result, null);
     }
 
     //TODO: (number, hangingProtocol, result) and attrs are interdependent; passing
     // non-matching values leads to a invalid Case instance. Get rid of all member variables
     // except allAttrs
-    public Case(int number, String hangingProtocol, String result, Map<String, String> attrs) {
+    public Case(int number, List<String> seriesGroupUrls, String ecrfUrl, String result, Map<String, String> attrs) {
         this.number = number;
-        this.hangingProtocol = hangingProtocol;
+        this.seriesGroupUrls = new ArrayList<String>(seriesGroupUrls);
+        this.ecrfUrl = ecrfUrl;
         this.result = result;
         if (attrs == null) {
             this.allAttrs = new HashMap<String, String>();
@@ -59,24 +65,30 @@ public class Case {
         allAttrs.put(ATTR_NAME_RESULT, result);
     }
 
-    /**
-     * Get the value of hangingProtocol
-     *
-     * @return the value of hangingProtocol
-     */
-    public String getHangingProtocol() {
-        return hangingProtocol;
+    public List<String> getSeriesGroupUrls() {
+        return Collections.unmodifiableList(seriesGroupUrls);
     }
 
-    /**
-     * Set the value of hangingProtocol
-     *
-     * @param hangingProtocol new value of hangingProtocol
-     */
-    public void setHangingProtocol(String hangingProtocol) {
-        this.hangingProtocol = hangingProtocol;
-        this.hpObject = null;
-        allAttrs.put(ATTR_NAME_HP, hangingProtocol);
+    public void setSeriesGroupUrls(List<String> seriesGroupUrls) {
+        this.seriesGroupUrls = seriesGroupUrls;
+        int i = 0;
+        for (String sgUrl : seriesGroupUrls) {
+            allAttrs.put(ATTR_NAME_SERIES_GROUP + (i+1), sgUrl);
+            i++;
+        }
+        while (null != allAttrs.get(ATTR_NAME_SERIES_GROUP + (i+1))) {
+            allAttrs.remove(ATTR_NAME_SERIES_GROUP + (i+1));
+            i++;
+        }
+    }
+
+    public String getEcrfUrl() {
+        return ecrfUrl;
+    }
+
+    public void setEcrfUrl(String ecrfUrl) {
+        this.ecrfUrl = ecrfUrl;
+        allAttrs.put(ATTR_NAME_ECRF, ecrfUrl);
     }
 
     /**
@@ -90,7 +102,7 @@ public class Case {
      */
     public HangingProtocol getHangingProtocolObject() {
         if (null == hpObject) {
-            hpObject = new HangingProtocol(getHangingProtocol());
+            hpObject = new HangingProtocol(getSeriesGroupUrls(), getEcrfUrl());
         }
         return hpObject;
     }
@@ -143,7 +155,7 @@ public class Case {
 
     @Override
     public String toString() {
-        return "[Case: nr=" + getNumber() + ", hp=" + getHangingProtocol() + ", res=" + getResult() + "]";
+        return "[Case: nr=" + getNumber() + ", hp=" + getHangingProtocolObject() + ", res=" + getResult() + "]";
     }
 
 }

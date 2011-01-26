@@ -118,7 +118,7 @@ modelFactory.setAsyncMode(false);
  */
 function initializeFrame(frame, frameNo, brContext) {
     print("initializeFrame");
-    var nFrames = brContext.currentCase.hangingProtocolObject.seriesGroups.size();
+    var nFrames = brContext.currentCase.hangingProtocol.seriesGroups.size();
     if (nFrames <= nScreens) {
         // frame n on screen n
         frame.frame.setBounds(screens[frameNo].defaultConfiguration.bounds);
@@ -138,7 +138,7 @@ function initializeFrame(frame, frameNo, brContext) {
  * a java.awt.Rectangle that specifies the bounds of the frame on the screen.
  */
 function getFormFrameBounds(brContext) {
-    var nFrames = brContext.currentCase.hangingProtocolObject.seriesGroups.size();
+    var nFrames = brContext.currentCase.hangingProtocol.seriesGroups.size();
     var b = screens[nScreens-1].defaultConfiguration.bounds;
     if (nFrames < nScreens) {
         return b;
@@ -268,8 +268,7 @@ function doInitializeViewPanel(panel, seriesModel, brContext) {
                             "SL: " + " [" + cell.getOwner().getIndexOf(cell) + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "O: " + orientation,
                             "WL/WW: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
-                            "Zoom: " + cell.getScale(),
-                            "foo: " + brContext.currentCase.getAttribute("foo")
+                            "Zoom: " + cell.getScale()
                             //cellTextListArraySecret[panelIdx],
                             );
             }
@@ -448,7 +447,7 @@ function caseStartingPostFrameInitialization(brContext) {
         //multiSyncSetController.getSyncSet(o).syncController("zoompan", true);
     });
 
-    var seriesGroups = brContext.getCurrentCase().getHangingProtocolObject().getSeriesGroups().toArray();
+    var seriesGroups = brContext.getCurrentCase().getHangingProtocol().getSeriesGroups().toArray();
     var frames = brContext.getCurrentCaseFrames().toArray();
     //there is one frame per series group; the frames correspond 1:1 to the seriesGroups
 

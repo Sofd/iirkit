@@ -39,7 +39,7 @@ public class CsvIirServiceImpl implements IirService {
     private final BiMap<String, Integer> caseCsvHeaderColumnNrsByName;
 
     private static final String[] REQUIRED_CASE_HDRS = new String[]{
-        Case.ATTR_NAME_USER, Case.ATTR_NAME_CASE, Case.ATTR_NAME_HP, Case.ATTR_NAME_RESULT
+        Case.ATTR_NAME_USER, Case.ATTR_NAME_CASE, Case.ATTR_NAME_SERIES_GROUP + "1", Case.ATTR_NAME_ECRF, Case.ATTR_NAME_RESULT
     };
 
     public CsvIirServiceImpl(String userCsvFileName, String caseCsvFileName) {
@@ -78,7 +78,11 @@ public class CsvIirServiceImpl implements IirService {
                 String[] line = p.getLine();  //header row
                 caseCsvHeaderColumnNrsByName = new BiHashMap<String, Integer>();
                 for (int i = 0; i < line.length; i++) {
-                    caseCsvHeaderColumnNrsByName.put(line[i], i);
+                    String hdrName = line[i];
+                    if (caseCsvHeaderColumnNrsByName.containsKey(hdrName)) {
+                        throw new IllegalArgumentException("Duplicate header in " + caseCsvFile.getName() + ": " + hdrName);
+                    }
+                    caseCsvHeaderColumnNrsByName.put(hdrName, i);
                 }
                 for (String reqdHdr: REQUIRED_CASE_HDRS) {
                     if (! caseCsvHeaderColumnNrsByName.containsKey(reqdHdr)) {
@@ -115,7 +119,16 @@ public class CsvIirServiceImpl implements IirService {
                     if ("".equals(res)) {
                         res = null;
                     }
-                    Case c = new Case(caseNr, colVals.get(Case.ATTR_NAME_HP), res, colVals);
+                    List<String> seriesGroupUrls = new ArrayList<String>();
+                    for (int i = 1; ; i++) {
+                        String url = colVals.get(Case.ATTR_NAME_SERIES_GROUP + i);
+                        if ("".equals(url) || null == url) {
+                            break;
+                        }
+                        seriesGroupUrls.add(url);
+                    }
+                    String ecrfUrl = colVals.get(Case.ATTR_NAME_ECRF);
+                    Case c = new Case(caseNr, seriesGroupUrls, ecrfUrl, res, colVals);
                     c.setUser(user);
                     cases.add(c);
                 }
@@ -152,7 +165,7 @@ public class CsvIirServiceImpl implements IirService {
         if (null == c) {
             return null;
         } else {
-            Case result = new Case(c.getNumber(), c.getHangingProtocol(), c.getResult(), c.getAllAttributes());
+            Case result = new Case(c.getNumber(), c.getSeriesGroupUrls(), c.getEcrfUrl(), c.getResult(), c.getAllAttributes());
             result.setUser(copy(c.getUser()));
             return result;
         }
@@ -240,7 +253,8 @@ public class CsvIirServiceImpl implements IirService {
     public int update(Case c) {
         for (Case c2 : cases) {
             if (c2.getUser().equals(c.getUser()) && c2.getNumber() == c.getNumber()) {
-                c2.setHangingProtocol(c.getHangingProtocol());
+                //c2.setSeriesGroupUrls(c.getSeriesGroupUrls()); //wouldn't really work -- would have to update caseCsvHeaderColumnNrsByName if necessary
+                c2.setEcrfUrl(c.getEcrfUrl());
                 c2.setResult(c.getResult());
                 try {
                     persistDatabase();
@@ -261,8 +275,8 @@ public class CsvIirServiceImpl implements IirService {
         try {
             CSVPrinter printer = new CSVPrinter(w);
             int nColumns = caseCsvHeaderColumnNrsByName.size();
-            for (int col = 0; col < nColumns; col++) {
-                printer.print(caseCsvHeaderColumnNrsByName.reverseGet(col));
+            for (int colNr = 0; colNr < nColumns; colNr++) {
+                printer.print(caseCsvHeaderColumnNrsByName.reverseGet(colNr));
             }
             printer.println();
             for (Case c : cases) {
