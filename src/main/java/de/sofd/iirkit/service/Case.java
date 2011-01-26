@@ -1,5 +1,9 @@
 package de.sofd.iirkit.service;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  *
  * @author olaf
@@ -11,11 +15,29 @@ public class Case {
     protected String hangingProtocol;
     protected HangingProtocol hpObject;
     protected String result;
+    protected Map<String, String> allAttrs;
+
+    public static final String ATTR_NAME_USER   = "user";
+    public static final String ATTR_NAME_CASE   = "case";
+    public static final String ATTR_NAME_HP     = "hangingProtocol";
+    public static final String ATTR_NAME_RESULT = "result";
 
     public Case(int number, String hangingProtocol, String result) {
+        this(number, hangingProtocol, result, null);
+    }
+
+    //TODO: (number, hangingProtocol, result) and attrs are interdependent; passing
+    // non-matching values leads to a invalid Case instance. Get rid of all member variables
+    // except allAttrs
+    public Case(int number, String hangingProtocol, String result, Map<String, String> attrs) {
         this.number = number;
         this.hangingProtocol = hangingProtocol;
         this.result = result;
+        if (attrs == null) {
+            this.allAttrs = new HashMap<String, String>();
+        } else {
+            this.allAttrs = new HashMap<String, String>(attrs);
+        }
     }
 
     /**
@@ -34,6 +56,7 @@ public class Case {
      */
     public void setResult(String result) {
         this.result = result;
+        allAttrs.put(ATTR_NAME_RESULT, result);
     }
 
     /**
@@ -53,6 +76,7 @@ public class Case {
     public void setHangingProtocol(String hangingProtocol) {
         this.hangingProtocol = hangingProtocol;
         this.hpObject = null;
+        allAttrs.put(ATTR_NAME_HP, hangingProtocol);
     }
 
     /**
@@ -87,6 +111,7 @@ public class Case {
      */
     public void setNumber(int number) {
         this.number = number;
+        allAttrs.put(ATTR_NAME_CASE, "" + number);
     }
 
     /**
@@ -105,6 +130,15 @@ public class Case {
      */
     public void setUser(User user) {
         this.user = user;
+        allAttrs.put(ATTR_NAME_USER, user.getName());
+    }
+
+    public Map<String, String> getAllAttributes() {
+        return Collections.unmodifiableMap(allAttrs);
+    }
+
+    public String getAttribute(String name) {
+        return allAttrs.get(name);
     }
 
     @Override

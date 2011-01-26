@@ -168,7 +168,7 @@ var useInlineEnlargedView = System.getProperty("iirkit.useInlineEnlargedView");
  */
 function initializeViewPanel(panel, seriesModel, brContext) {
     if (!panel.getAttribute("ui")) {
-        doInitializeViewPanel(panel, seriesModel);
+        doInitializeViewPanel(panel, seriesModel, brContext);
     }
     panel.getAttribute("ui").listView.model = seriesModel;
 }
@@ -185,7 +185,7 @@ function resetViewPanel(panel, brContext) {
     ui.listView.setModel(new DefaultListModel());
 }
 
-function doInitializeViewPanel(panel, seriesModel) {
+function doInitializeViewPanel(panel, seriesModel, brContext) {
     panel.setLayout(new BorderLayout());
     var listView;
     if (useJ2DInFrameViews) {
@@ -263,7 +263,8 @@ function doInitializeViewPanel(panel, seriesModel) {
                             "SL: " + " [" + cell.getOwner().getIndexOf(cell) + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
                             "O: " + orientation,
                             "WL/WW: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
-                            "Zoom: " + cell.getScale()
+                            "Zoom: " + cell.getScale(),
+                            "foo: " + brContext.currentCase.getAttribute("foo")
                             //cellTextListArraySecret[panelIdx],
                             );
             }

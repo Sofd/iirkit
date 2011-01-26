@@ -1,5 +1,7 @@
 package de.sofd.iirkit.service;
 
+import de.sofd.util.BiHashMap;
+import de.sofd.util.BiMap;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -34,6 +36,12 @@ public class CsvIirServiceImpl implements IirService {
 
     private final File userCsvFile, caseCsvFile;
 
+    private final BiMap<String, Integer> caseCsvHeaderColumnNrsByName;
+
+    private static final String[] REQUIRED_CASE_HDRS = new String[]{
+        Case.ATTR_NAME_USER, Case.ATTR_NAME_CASE, Case.ATTR_NAME_HP, Case.ATTR_NAME_RESULT
+    };
+
     public CsvIirServiceImpl(String userCsvFileName, String caseCsvFileName) {
         this(new File(userCsvFileName), new File(caseCsvFileName));
     }
@@ -45,7 +53,6 @@ public class CsvIirServiceImpl implements IirService {
         File file = null;
         int lineNo = -1;
         try {
-            //TODO: more flexibility: variable column order, arbitrary additional columns
             {
                 file = userCsvFile;
                 CSVParser p = new CSVParser(new InputStreamReader(new FileInputStream(userCsvFile), "utf-8"));
@@ -65,20 +72,37 @@ public class CsvIirServiceImpl implements IirService {
                 lineNo = -1;
                 file = caseCsvFile;
                 CSVParser p = new CSVParser(new InputStreamReader(new FileInputStream(caseCsvFile), "utf-8"));
+
                 lineNo = 1;
-                String[] line = p.getLine(); // skip headers
+
+                String[] line = p.getLine();  //header row
+                caseCsvHeaderColumnNrsByName = new BiHashMap<String, Integer>();
+                for (int i = 0; i < line.length; i++) {
+                    caseCsvHeaderColumnNrsByName.put(line[i], i);
+                }
+                for (String reqdHdr: REQUIRED_CASE_HDRS) {
+                    if (! caseCsvHeaderColumnNrsByName.containsKey(reqdHdr)) {
+                        throw new IllegalArgumentException("Required header not found in " + caseCsvFile.getName() + ": " + reqdHdr);
+                    }
+                }
+
                 Map<String, Integer> lastCaseNrByUserName = new HashMap<String, Integer>(); //for checking for of caseNr continuity
                 while (null != (line = p.getLine())) {
                     ++lineNo;
-                    if (line.length < 4) {
-                        throw new IllegalArgumentException("Illegal line: " + lineToString(line));
+
+                    Map<String,String> colVals = new HashMap<String, String>();
+                    for (String hdrName : caseCsvHeaderColumnNrsByName.keySet()) {
+                        int colNr = caseCsvHeaderColumnNrsByName.get(hdrName);
+                        String colValue = (line.length > colNr ? line[colNr] : null);
+                        colVals.put(hdrName, colValue);
                     }
-                    String userName = line[0];
+
+                    String userName = colVals.get(Case.ATTR_NAME_USER);
                     User user = usersByName.get(userName);
                     if (null == user) {
                         throw new IllegalArgumentException("unknown user: " + userName);
                     }
-                    int caseNr = Integer.parseInt(line[1]);
+                    int caseNr = Integer.parseInt(colVals.get(Case.ATTR_NAME_CASE));
                     Integer lastCaseNr = lastCaseNrByUserName.get(userName);
                     if (null == lastCaseNr) {
                         lastCaseNr = 0;
@@ -87,11 +111,11 @@ public class CsvIirServiceImpl implements IirService {
                         throw new IllegalArgumentException("Non-continuous case number for user " + userName + ": found: " + caseNr + ", expected: " + (lastCaseNr + 1));
                     }
                     lastCaseNrByUserName.put(userName, caseNr);
-                    String res = line[3];
+                    String res = colVals.get(Case.ATTR_NAME_RESULT);
                     if ("".equals(res)) {
                         res = null;
                     }
-                    Case c = new Case(caseNr, line[2], res);
+                    Case c = new Case(caseNr, colVals.get(Case.ATTR_NAME_HP), res, colVals);
                     c.setUser(user);
                     cases.add(c);
                 }
@@ -128,7 +152,7 @@ public class CsvIirServiceImpl implements IirService {
         if (null == c) {
             return null;
         } else {
-            Case result = new Case(c.getNumber(), c.getHangingProtocol(), c.getResult());
+            Case result = new Case(c.getNumber(), c.getHangingProtocol(), c.getResult(), c.getAllAttributes());
             result.setUser(copy(c.getUser()));
             return result;
         }
@@ -236,12 +260,16 @@ public class CsvIirServiceImpl implements IirService {
         Writer w = new OutputStreamWriter(new FileOutputStream(caseTmpFile), "utf-8");
         try {
             CSVPrinter printer = new CSVPrinter(w);
-            printer.println(new String[]{"user","case","hangingProtocol","result"});
+            int nColumns = caseCsvHeaderColumnNrsByName.size();
+            for (int col = 0; col < nColumns; col++) {
+                printer.print(caseCsvHeaderColumnNrsByName.reverseGet(col));
+            }
+            printer.println();
             for (Case c : cases) {
-                printer.print(c.getUser().getName());
-                printer.print("" + c.getNumber());
-                printer.print(nonNull(c.getHangingProtocol()));
-                printer.print(nonNull(c.getResult()));
+                for (int colNr = 0; colNr < nColumns; colNr++) {
+                    String colName = caseCsvHeaderColumnNrsByName.reverseGet(colNr);
+                    printer.print(nonNull(c.getAllAttributes().get(colName)));
+                }
                 printer.println();
             }
         } finally {
