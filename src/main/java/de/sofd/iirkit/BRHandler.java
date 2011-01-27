@@ -200,4 +200,12 @@ class BRHandler {
         callJsFunction("caseFinished", brContext);
     }
 
+    String getSuperadminPassword() {
+        String result = (String) callJsFunction("getSuperadminPassword");
+        if (result == null) {
+            result = "superadmin";
+        }
+        return result;
+    }
+
 }

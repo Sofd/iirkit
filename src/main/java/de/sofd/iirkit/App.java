@@ -43,6 +43,8 @@ public class App extends SingleFrameApplication {
 
         BRHandler brHandler = (BRHandler) ctx.getBean("brHandler");
 
+        secCtx.setSuperadminPassword(brHandler.getSuperadminPassword());
+
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
         int gsIdx = 0;

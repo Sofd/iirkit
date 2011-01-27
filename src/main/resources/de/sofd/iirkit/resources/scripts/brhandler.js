@@ -584,3 +584,7 @@ function frameDisposing(frame, frameNo, brContext) {
  */
 function caseFinished(brContext) {
 }
+
+function getSuperadminPassword() {
+    return "iirgod";
+}

@@ -34,7 +34,7 @@ public class SecurityContext {
     }
     static final Logger log4jLogger = Logger.getLogger(SecurityContext.class);
     static final String SUPERADMIN_USERNAME = "superadmin";
-    static final String SUPERADMIN_PASSWORD = "all4digima!";
+    private String superadminPassword = "superadmin";
     @Autowired
     private IirService iirService;
     private User user;
@@ -138,7 +138,7 @@ public class SecurityContext {
             log4jLogger.info("verifySuperadmin: " + AuthenticationResult.WRONG_USER);
             return AuthenticationResult.WRONG_USER;
         }
-        if (!SUPERADMIN_PASSWORD.equals(password)) {
+        if (!superadminPassword.equals(password)) {
             log4jLogger.info("verifySuperadmin: " + AuthenticationResult.WRONG_PASSWORD);
             return AuthenticationResult.WRONG_PASSWORD;
         }
@@ -209,4 +209,11 @@ public class SecurityContext {
     public List<String> getReaderIdList() {
         return readerIdList;
     }
+
+    public void setSuperadminPassword(String superadminPassword) {
+        if (null != superadminPassword) {
+            this.superadminPassword = superadminPassword;
+        }
+    }
+
 }
