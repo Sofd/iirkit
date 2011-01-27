@@ -1,0 +1,15 @@
+    toolbar.add(createAction("Test", "writo into ecrf", function() {
+         runJavascriptInEcrfAsync("setHeadline('hello world!')");
+    }));
+
+===============
+
+    var listView = panel.getAttribute("ui").listView;
+    var zoom = parseFloat(brContext.currentCase.getAttribute("zoom"));
+    if (!zoom) { zoom=1.0; }
+    print("zoom setting to "+zoom+" list length: " + listView.getLength());
+    for (var i = 0; i < listView.getLength(); i++) {
+        listView.getCell(i).setInteractively("scale",zoom);
+        print("zoom set to "+zoom);
+    }
+    panel.getAttribute("controllers").lazyZoomPanInitializationController.enabled = false;

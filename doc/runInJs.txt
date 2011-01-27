@@ -1,3 +1,0 @@
-    toolbar.add(createAction("Test", "writo into ecrf", function() {
-         runJavascriptInEcrfAsync("setHeadline('hello world!')");
-    }));
