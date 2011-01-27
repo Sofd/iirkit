@@ -13,3 +13,13 @@
         print("zoom set to "+zoom);
     }
     panel.getAttribute("controllers").lazyZoomPanInitializationController.enabled = false;
+
+===============
+
+    var ui = panel.getAttribute("ui");
+    ui.listView.addCellMouseListener(new JavaAdapter(MouseAdapter, {
+                mouseClicked: function() {
+                    print("mouseClicked" + ui.orientation);
+                    runJavascriptInEcrfAsync("setHeadline('"+ui.orientation+"')");
+                }
+    }));

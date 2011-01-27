@@ -18,9 +18,7 @@ importClass(Packages.java.awt.Color);
 importClass(Packages.java.awt.Dimension);
 importClass(Packages.java.awt.GraphicsEnvironment);
 importClass(Packages.java.awt.Rectangle);
-importClass(Packages.java.awt.event.ActionListener);
-importClass(Packages.java.awt.event.ItemListener);
-importClass(Packages.java.awt.event.ItemEvent);
+importPackage(java.awt.event);
 importClass(Packages.java.util.List);
 importClass(Packages.javax.swing.Action);
 importClass(Packages.javax.swing.AbstractAction);
@@ -458,8 +456,8 @@ function resetAllWindowing(panel) {
 var orientations = DicomUtil.PatientBasedMainAxisOrientation.values();
 
 /**
- * Called during the initialization of a frame AFTER the panels in the frame have been
- * initialized.
+ * Called during the initialization of a case after all the frames and all the panels
+ * inside them have been initialized.
  */
 function caseStartingPostFrameInitialization(brContext) {
     print("caseStartingPostFrameInitialization");
@@ -518,6 +516,7 @@ function caseStartingPostFrameInitialization(brContext) {
                 if (orientation) {
                     multiSyncSetController.getSyncSet(orientation).addList(ui.listView);
                 }
+                ui.orientation = orientation;
             }
             frameUi.listViews.push(ui.listView);
         });
