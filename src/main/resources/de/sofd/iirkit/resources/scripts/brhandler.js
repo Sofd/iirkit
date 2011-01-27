@@ -1,6 +1,7 @@
 var enableROIs = true;
 var enableMouseMeasurements = true;
-
+var enableLUTselection = true;
+var enableLUTscale= true;
 
 importPackage(java.lang);
 importClass(java.io.File);
@@ -18,6 +19,8 @@ importClass(Packages.java.awt.Dimension);
 importClass(Packages.java.awt.GraphicsEnvironment);
 importClass(Packages.java.awt.Rectangle);
 importClass(Packages.java.awt.event.ActionListener);
+importClass(Packages.java.awt.event.ItemListener);
+importClass(Packages.java.awt.event.ItemEvent);
 importClass(Packages.java.util.List);
 importClass(Packages.javax.swing.Action);
 importClass(Packages.javax.swing.AbstractAction);
@@ -391,6 +394,38 @@ function doInitializeViewPanel(panel, seriesModel, brContext) {
         //display series in separate frame?
     }
 
+    if (enableLUTselection) {
+        toolbar.add(new JLabel("lut:"));
+        var lutCombo = new JComboBox();
+        lutCombo.addItem("[none]");
+        LookupTables.getAllKnownLuts().toArray().foreach(function(lut) {
+            lutCombo.addItem(lut);
+        });
+
+        lutCombo.setRenderer(new LookupTableCellRenderer(70));
+        lutCombo.addItemListener(new ItemListener() {
+            itemStateChanged: function(e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    var lut = null;
+                    if (lutCombo.getSelectedItem() != "[none]") {
+                        lut = lutCombo.getSelectedItem();
+                        //slider.setLut(lut);
+                    }
+                    print("activating lut: " + lut);
+                    for (var i = 0; i < listView.getLength(); i++) {
+                        listView.getCell(i).setLookupTable(lut);
+                    }
+                }
+            }
+        });
+        toolbar.add(lutCombo);
+    }
+
+    if (enableLUTscale) {
+        var plutc = new ImageListViewPrintLUTController(listView, 4, ImageListViewPrintLUTController.ScaleType.ABSOLUTE);
+        plutc.enabled = true;
+    }
+
     ui.syncButtonsToolbar = new JToolBar();
     ui.syncButtonsToolbar.floatable = false;
     toolbar.add(ui.syncButtonsToolbar);
@@ -525,9 +560,9 @@ function caseStartingPostFrameInitialization(brContext) {
         frameView.mainToolBar.add(createAction("Info", "toggle info display", function() {
             frames.foreach(function(frame) {
                 frame.getActiveViewPanels().toArray().foreach(function(vp) {
-                    var infoMode = vp.getAttribute("infoMode");
+                    var infoMode = parseInt(vp.getAttribute("infoMode"));
                     if (!infoMode) { infoMode = 0; }
-                    infoMode = (infoMode + 1) % 3;
+                    infoMode = (infoMode + 1) % 2;
                     vp.putAttribute("infoMode", infoMode);
                     vp.getAttribute("ui").listView.refreshCells();
                 });
