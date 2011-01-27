@@ -42,15 +42,15 @@ public class SessionControlDialog extends javax.swing.JDialog {
         this.iirService = iirSvc;
         this.securityContext = securityCtx;
 
-        clearButton.setEnabled(false);
+        //clearButton.setEnabled(false);
         rereadButton.setEnabled(false);
         logButton.setEnabled(false);
         okButton.setEnabled(false);
-        unlockButton.setEnabled(false);
+        //unlockButton.setEnabled(false);
         if (securityContext.getAuthority().equals(SecurityContext.Authority.Manager)) {
-            unlockButton.setVisible(true);
+            //unlockButton.setVisible(true);
         } else {
-            unlockButton.setVisible(false);
+            //unlockButton.setVisible(false);
         }
 
         this.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -80,16 +80,16 @@ public class SessionControlDialog extends javax.swing.JDialog {
                         int nDoneCases = iirService.getNumberOfDoneCasesOf(selectedUser);
                         int nRemainingCases = nCases - nDoneCases;
                         rereadButton.setEnabled(nDoneCases > 0 && selectedUser.equals(securityContext.getUser()));
-                        unlockButton.setEnabled(securityContext.isLocked(selectedUser.getName()));
+                        //unlockButton.setEnabled(securityContext.isLocked(selectedUser.getName()));
                         okButton.setEnabled(nRemainingCases > 0 && selectedUser.equals(securityContext.getUser()));
-                        clearButton.setEnabled(false);
+                        //clearButton.setEnabled(false);
                         logButton.setEnabled(true);
                     } else {
                         okButton.setEnabled(false);
-                        clearButton.setEnabled(false);
+                        //clearButton.setEnabled(false);
                         logButton.setEnabled(true);
                         rereadButton.setEnabled(false);
-                        unlockButton.setEnabled(false);
+                        //unlockButton.setEnabled(false);
                     }
                 }
             }
@@ -267,9 +267,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
         jPanel2 = new javax.swing.JPanel();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        clearButton = new javax.swing.JButton();
         rereadButton = new javax.swing.JButton();
-        unlockButton = new javax.swing.JButton();
         logButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         sessionList = new javax.swing.JList();
@@ -302,7 +300,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel1)
                     .add(jLabel2))
-                .addContainerGap(872, Short.MAX_VALUE))
+                .addContainerGap(889, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -320,7 +318,6 @@ public class SessionControlDialog extends javax.swing.JDialog {
         okButton.setAction(actionMap.get("okAction")); // NOI18N
         okButton.setText(resourceMap.getString("okButton.text")); // NOI18N
         okButton.setName("okButton"); // NOI18N
-        okButton.setNextFocusableComponent(clearButton);
         okButton.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 okButtonKeyPressed(evt);
@@ -337,22 +334,9 @@ public class SessionControlDialog extends javax.swing.JDialog {
             }
         });
 
-        clearButton.setAction(actionMap.get("clearAction")); // NOI18N
-        clearButton.setText(resourceMap.getString("clearButton.text")); // NOI18N
-        clearButton.setName("clearButton"); // NOI18N
-        clearButton.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                clearButtonKeyPressed(evt);
-            }
-        });
-
         rereadButton.setAction(actionMap.get("rereadAction")); // NOI18N
         rereadButton.setText(resourceMap.getString("rereadButton.text")); // NOI18N
         rereadButton.setName("rereadButton"); // NOI18N
-
-        unlockButton.setAction(actionMap.get("unlockAction")); // NOI18N
-        unlockButton.setText(resourceMap.getString("unlockButton.text")); // NOI18N
-        unlockButton.setName("unlockButton"); // NOI18N
 
         logButton.setAction(actionMap.get("logAction")); // NOI18N
         logButton.setText(resourceMap.getString("logButton.text")); // NOI18N
@@ -364,14 +348,10 @@ public class SessionControlDialog extends javax.swing.JDialog {
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(clearButton)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(rereadButton)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(unlockButton)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(logButton)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 471, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 653, Short.MAX_VALUE)
                 .add(cancelButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(okButton)
@@ -384,9 +364,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(okButton)
                     .add(cancelButton)
-                    .add(clearButton)
                     .add(rereadButton)
-                    .add(unlockButton)
                     .add(logButton))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -417,7 +395,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
             .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 961, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 992, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -446,18 +424,12 @@ public class SessionControlDialog extends javax.swing.JDialog {
         cancelButton.doClick();
     }//GEN-LAST:event_cancelButtonKeyPressed
 
-    private void clearButtonKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_clearButtonKeyPressed
-        // TODO add your handling code here:
-        clearButton.doClick();
-    }//GEN-LAST:event_clearButtonKeyPressed
-
     private void sessionListKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_sessionListKeyPressed
         // TODO add your handling code here:
     }//GEN-LAST:event_sessionListKeyPressed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     protected javax.swing.JButton cancelButton;
-    protected javax.swing.JButton clearButton;
     private javax.swing.JFileChooser exportFileChooser;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -468,7 +440,6 @@ public class SessionControlDialog extends javax.swing.JDialog {
     protected javax.swing.JButton okButton;
     private javax.swing.JButton rereadButton;
     private javax.swing.JList sessionList;
-    private javax.swing.JButton unlockButton;
     // End of variables declaration//GEN-END:variables
     static final Logger log4jLogger = Logger.getLogger(SessionControlDialog.class);
 }

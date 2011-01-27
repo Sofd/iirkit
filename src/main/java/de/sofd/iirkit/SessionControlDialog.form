@@ -39,7 +39,7 @@
           <Component id="jPanel2" alignment="0" max="32767" attributes="0"/>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="961" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="992" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -71,7 +71,7 @@
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="1"/>
                   </Group>
-                  <EmptySpace pref="872" max="32767" attributes="0"/>
+                  <EmptySpace pref="889" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -112,14 +112,10 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="clearButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="rereadButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="unlockButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
                   <Component id="logButton" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace pref="471" max="32767" attributes="0"/>
+                  <EmptySpace pref="653" max="32767" attributes="0"/>
                   <Component id="cancelButton" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="okButton" min="-2" max="-2" attributes="0"/>
@@ -134,9 +130,7 @@
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="okButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="cancelButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="clearButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="rereadButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="unlockButton" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="logButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
@@ -153,7 +147,7 @@
             <Property name="text" type="java.lang.String" resourceKey="okButton.text"/>
             <Property name="name" type="java.lang.String" value="okButton" noResource="true"/>
             <Property name="nextFocusableComponent" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-              <ComponentRef name="clearButton"/>
+              <ComponentRef name="default"/>
             </Property>
           </Properties>
           <Events>
@@ -181,24 +175,6 @@
             <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
           </AuxValues>
         </Component>
-        <Component class="javax.swing.JButton" name="clearButton">
-          <Properties>
-            <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
-              <action class="de.sofd.hieronymusr312046.SessionControlDialog" id="clearAction" methodName="clearAction"/>
-            </Property>
-            <Property name="text" type="java.lang.String" resourceKey="clearButton.text"/>
-            <Property name="name" type="java.lang.String" value="clearButton" noResource="true"/>
-            <Property name="nextFocusableComponent" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-              <ComponentRef name="default"/>
-            </Property>
-          </Properties>
-          <Events>
-            <EventHandler event="keyPressed" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="clearButtonKeyPressed"/>
-          </Events>
-          <AuxValues>
-            <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
-          </AuxValues>
-        </Component>
         <Component class="javax.swing.JButton" name="rereadButton">
           <Properties>
             <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
@@ -206,15 +182,6 @@
             </Property>
             <Property name="text" type="java.lang.String" resourceKey="rereadButton.text"/>
             <Property name="name" type="java.lang.String" value="rereadButton" noResource="true"/>
-          </Properties>
-        </Component>
-        <Component class="javax.swing.JButton" name="unlockButton">
-          <Properties>
-            <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
-              <action class="de.sofd.hieronymusr312046.SessionControlDialog" id="unlockAction" methodName="unlockAction"/>
-            </Property>
-            <Property name="text" type="java.lang.String" resourceKey="unlockButton.text"/>
-            <Property name="name" type="java.lang.String" value="unlockButton" noResource="true"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JButton" name="logButton">
