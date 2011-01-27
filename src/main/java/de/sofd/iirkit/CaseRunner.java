@@ -39,6 +39,7 @@ public class CaseRunner implements BRContext {
         this.app = app;
         this.brHandler = brHandler;
         formRunner = new FormRunner(app);
+        BRHandler.setFormRunnerForEcrfJavascript(formRunner);
     }
 
     @Override

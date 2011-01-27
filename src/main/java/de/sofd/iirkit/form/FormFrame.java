@@ -58,7 +58,7 @@ import org.apache.log4j.Logger;
         setWindowTitle("eCRF");
         //setWindowIcon(new QIcon("classpath:com/trolltech/images/qt-logo.png"));
 
-        //webView.loadStarted.connect(this, "loadStarted()");
+        webView.loadStarted.connect(this, "loadStarted()");
         webView.loadProgress.connect(this, "loadProgress(int)");
         webView.loadFinished.connect(this, "loadDone()");
         //webView.linkClicked.connect(this, "linkClicked(QUrl)");
@@ -114,12 +114,43 @@ import org.apache.log4j.Logger;
 
     }
 
+    private void loadStarted() {
+    }
+
     private void loadProgress(int x) {
         statusBar().showMessage("Loading: " + x + " %");
     }
 
     private void loadDone() {
         statusBar().showMessage("Loaded.");
+    }
+
+    /**
+     * Must be called in QT thread.
+     *
+     * @param jsCode
+     */
+    public void runJavascriptInForm(String jsCode) {
+        //TODO: synchronize with loadDone() etc.?
+        if (webView == null) {
+            logger.error("can't run JS code: web view not present");
+            return;
+        }
+        QWebPage page = webView.page();
+        if (page == null) {
+            logger.error("can't run JS code: web page not present");
+            return;
+        }
+        QWebFrame frame = page.currentFrame();
+        if (frame == null) {
+            logger.error("can't run JS code: web frame not present");
+            return;
+        }
+        try {
+            frame.evaluateJavaScript(jsCode);
+        } catch (Exception e) {
+            logger.error("error running javascript code (" + jsCode + "): " + e.getLocalizedMessage(), e);
+        }
     }
 
     private Runnable formDoneCallback;

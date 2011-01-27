@@ -132,6 +132,15 @@ public class FormRunner {
         this.formShownCallback = formShownCallback;
     }
 
+    public void runJavascriptInFormAsync(final String jsCode) {
+        //TODO: synchronize with form loading
+        QApplication.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                formFrame.runJavascriptInForm(jsCode);
+            }
+        });
+    }
 
     public void disposeFrame() {
         QApplication.invokeLater(new Runnable() {

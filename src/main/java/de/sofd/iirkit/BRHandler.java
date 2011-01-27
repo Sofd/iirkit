@@ -1,6 +1,7 @@
 package de.sofd.iirkit;
 
 import de.sofd.iirkit.form.FormFrame;
+import de.sofd.iirkit.form.FormRunner;
 import de.sofd.lang.Function2;
 import de.sofd.lang.Runnable2;
 import java.awt.Rectangle;
@@ -12,7 +13,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import javax.swing.ListModel;
 import org.apache.log4j.Logger;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
@@ -46,6 +46,14 @@ class BRHandler {
         this.appConfig = appConfig;
     }
 
+    //hack hack
+
+    private static FormRunner formRunnerForJavascript;
+
+    public static void setFormRunnerForEcrfJavascript(FormRunner fr) {
+        formRunnerForJavascript = fr;
+    }
+
     /**
      * For use from Javascript.
      * 
@@ -53,6 +61,15 @@ class BRHandler {
      */
     public static void print(String s) {
         System.out.println(s);
+    }
+
+    /**
+     * For use from Javascript.
+     *
+     * @param s
+     */
+    public static void runJavascriptInEcrfAsync(String jsCode) {
+        formRunnerForJavascript.runJavascriptInFormAsync(jsCode);
     }
 
     private Reader getBrHandlerJsReader() throws IOException {
@@ -90,7 +107,7 @@ class BRHandler {
                 ScriptableObject jsScopeTmp = new ImporterTopLevel(cx); //cx.initStandardObjects();
                 if (!isJsInitialized) {
                     try {
-                        jsScopeTmp.defineFunctionProperties(new String[]{"print"}, BRHandler.class, ScriptableObject.DONTENUM);
+                        jsScopeTmp.defineFunctionProperties(new String[]{"print","runJavascriptInEcrfAsync"}, BRHandler.class, ScriptableObject.DONTENUM);
                         Reader r = getBrHandlerJsReader();
                         cx.evaluateReader(jsScopeTmp, r, "brHandler", 1, null);
                         //cx.evaluateString(jsScopeTmp, "print('HELLO FROM JS'); function caseStarting(ctx) { print('CASE STARTING'); }", "<cmd>", 1, null);
