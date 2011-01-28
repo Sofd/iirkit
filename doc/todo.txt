@@ -1,0 +1,33 @@
+- Reread: Integration mit User-Liste (admin-User muss bestätigen o.ä.)
+
+- Kommandozeilenparameter: automatisches Einloggen & Case-Auswahl
+
+- im Script Bilder in Serien sortieren nach SL
+
+- useInlineEnlargedView
+
+- brhandler.js <=> eCRF - Integration:
+
+  - synchrone eCRF-JS-Aufrufe mit Übertragung des Returnwerts zurück
+    an brhandler.js
+
+  - Synchronisierung der eCRF-JS-Aufrufe mit dem Laden des eCRFs in
+    Webkit
+
+- bessere JS-Integration:
+
+  - frame, viewPanel wrappen in sich nativ anfühlende JS-Objekte (mit
+    offenen Properties etc.) (Rhino:
+    http://www.mozilla.org/rhino/tutorial.html#javaScriptHostObjects)
+
+  - Java-Collections wrappen, sodass sie sich in JS wie Arrays
+    anfühlen (spart toArray-Aufrufe).
+
+- Support für JOGL- und TWL-Backends von Viskit, möglichst transparent
+  für brhandler.js (=> Wrapper frame, viewPanel - Klasse, UI-Widgets
+  (Buttons/Actions, Comboboxen, ...), ImageListView-Factory)
+
+- Swing und QT im selben Thread ausführen wäre cool...  (dafür müsste
+  man wohl selber die Eventschleife schreiben und wechselseitig Events
+  beider Toolkits abholen und dispatchen...gibt wohl kein öffentliches
+  API dafür)

@@ -23,3 +23,47 @@
                     runJavascriptInEcrfAsync("setHeadline('"+ui.orientation+"')");
                 }
     }));
+
+
+===============
+
+function caseStartingPostFrameInitialization(brContext) {
+
+    .....
+
+    frames.foreach(function(frameView) {
+
+        ....
+
+        if (enableLUTselection) {
+            frameView.mainToolBar.add(new JLabel("lut:"));
+            var lutCombo = new JComboBox();
+            lutCombo.addItem("[none]");
+            LookupTables.getAllKnownLuts().toArray().foreach(function(lut) {
+                lutCombo.addItem(lut);
+            });
+
+            lutCombo.setRenderer(new LookupTableCellRenderer(70));
+            lutCombo.addItemListener(new ItemListener() {
+                itemStateChanged: function(e) {
+                    if (e.getStateChange() == ItemEvent.SELECTED) {
+                        var lut = null;
+                        if (lutCombo.getSelectedItem() != "[none]") {
+                            lut = lutCombo.getSelectedItem();
+                            //slider.setLut(lut);
+                        }
+                        print("activating lut: " + lut);
+                        frameView.activeViewPanels.toArray().foreach(function(vp) {
+                                var ui = vp.getAttribute("ui");
+                                for (var i = 0; i < ui.listView.getLength(); i++) {
+                                    ui.listView.getCell(i).setLookupTable(lut);
+                                }
+                            });
+                    }
+                }
+            });
+            frameView.mainToolBar.add(lutCombo);
+        }
+
+     }
+}
