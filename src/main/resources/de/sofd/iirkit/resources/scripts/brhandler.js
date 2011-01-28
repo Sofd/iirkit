@@ -109,25 +109,22 @@ function caseStarting(brContext) {
 }
 
 
-// default frame geometry autoconfiguration. Will work for one or more displays
-// arranged horizontally. For anything more exotic, roll your own.
+var modelFactory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+modelFactory.supportMultiframes = false;
+modelFactory.checkFileReadability = false;
+modelFactory.asyncMode = false;
 
 var screens = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
 var nScreens = screens.length;
-
-var modelFactory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
-modelFactory.setSupportMultiframes(false);
-modelFactory.setCheckFileReadability(false);
-modelFactory.setAsyncMode(false);
 
 /**
  * Called once per
  * frame and case (and thus potentially multiple times per frame, as frames
  * may be reused between cases).
  * After this method returns, the view panels for the series to be displayed will
- * be created and initializeViewPanel() will be called for each of them, and finally
- * caseStartingPostFrameInitialization() is called to finish the initialization of
- * the frame.
+ * be created and initializeViewPanel() will be called for each of them. After
+ * this is done for all frame of the case, caseStartingPostFrameInitialization()
+ * is called to finish the initialization of the case.
  *
  * The method should place and
  * intialize the frame (not the view panels/listViews inside it; as those will
@@ -140,6 +137,10 @@ modelFactory.setAsyncMode(false);
  */
 function initializeFrame(frame, frameNr, brContext) {
     print("initializeFrame");
+
+    // default frame geometry autoconfiguration. Will work for one or more displays
+    // arranged horizontally. For anything more exotic, roll your own.
+
     var nFrames = brContext.currentCase.hangingProtocol.seriesGroups.size();
     if (nFrames <= nScreens) {
         // frame n on screen n
@@ -201,7 +202,8 @@ function initializeViewPanel(panel, seriesUrl, brContext, frameNr, panelNr) {
     if (!panel.getAttribute("ui")) {
         doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr);
     }
-    panel.getAttribute("ui").listView.model = seriesModel;
+    var ui = panel.getAttribute("ui");
+    ui.listView.model = seriesModel;
 }
 
 
@@ -491,8 +493,8 @@ function caseStartingPostFrameInitialization(brContext) {
     // initialize synchronizations
     orientations.foreach(function(o) {
         multiSyncSetController.getSyncSet(o).syncController("selection", true);
-        //multiSyncSetController.getSyncSet(o).syncController("windowing", true);
-        //multiSyncSetController.getSyncSet(o).syncController("zoompan", true);
+        multiSyncSetController.getSyncSet(o).syncController("windowing", true);
+        multiSyncSetController.getSyncSet(o).syncController("zoompan", true);
     });
 
     var seriesGroups = brContext.getCurrentCase().getHangingProtocol().getSeriesGroups().toArray();
