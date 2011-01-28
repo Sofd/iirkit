@@ -184,12 +184,11 @@ var useInlineEnlargedView = System.getProperty("iirkit.useInlineEnlargedView");
 
 /**
  * Called when a view panel in a frame must be initialized. (called
- * after initializeFrame() and before caseStartingPostFrameInitialization()
- * was/is called for the frame that the vie panel belongs to).
+ * after initializeFrame() was called for the frame that the view panel belongs to).
  * <p>
  * A view panel is the rectangular panel in a frame that normally displays a series.
  * The seriesUrl parameter is name of the directory containing the DICOM images of the series.
- * The function should usually create a containing those images in the panel, and possibly
+ * The function should usually create a list view containing those images in the panel, and possibly
  * one or more UI elements like toolbar buttons that perform operations on the view.
  *
  * You may place arbitrary data into the panel using panel.putAttribute(key,value)/getAttribute(key)
@@ -220,21 +219,19 @@ function resetViewPanel(panel, brContext, frameNr, panelNr) {
 var infoMode = 0;
 
 function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) {
-    panel.setLayout(new BorderLayout());
-    var listView = new JGridImageListView();
-    listView.scaleMode = new JGridImageListView.MyScaleMode(1, 1);
-    //listView = new JGLImageListView();
-    //listView.scaleMode = new JGLImageListView.MyScaleMode(1, 1);
-
     var ui = {};
     panel.putAttribute("ui", ui);
     var controllers = {};
     panel.putAttribute("controllers", controllers);
 
-    ui.listView = listView;
+    panel.setLayout(new BorderLayout());
+    ui.listView = new JGridImageListView();
+    ui.listView.scaleMode = new JGridImageListView.MyScaleMode(1, 1);
+    //ui.listView = new JGLImageListView();
+    //ui.listView.scaleMode = new JGLImageListView.MyScaleMode(1, 1);
 
-    listView.background = Color.DARK_GRAY;
-    panel.add(listView, BorderLayout.CENTER);
+    ui.listView.background = Color.DARK_GRAY;
+    panel.add(ui.listView, BorderLayout.CENTER);
 
     //can't directly port inner class creation w/ c'tor args -- see http://www.mail-archive.com/dev-tech-js-engine-rhino@lists.mozilla.org/msg00518.html
 
@@ -243,7 +240,7 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
             setWindowingToOptimal(cell);
         }
     });
-    controllers.lazyWindowingToOptimalInitializationController.controlledImageListView = listView;
+    controllers.lazyWindowingToOptimalInitializationController.controlledImageListView = ui.listView;
     controllers.lazyWindowingToOptimalInitializationController.enabled = false;
 
     controllers.lazyWindowingToQCInitializationController = new JavaAdapter(ImageListViewInitialWindowingController, {
@@ -251,22 +248,22 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
             setWindowingToQC(cell);
         }
     });
-    controllers.lazyWindowingToQCInitializationController.controlledImageListView = listView;
+    controllers.lazyWindowingToQCInitializationController.controlledImageListView = ui.listView;
     controllers.lazyWindowingToQCInitializationController.enabled = true;
 
-    controllers.lazyZoomPanInitializationController = new ImageListViewInitialZoomPanController(listView);
+    controllers.lazyZoomPanInitializationController = new ImageListViewInitialZoomPanController(ui.listView);
     controllers.lazyZoomPanInitializationController.enabled = true;
 
-    new ImageListViewMouseWindowingController(listView);
-    new ImageListViewMouseZoomPanController(listView).doubleClickResetEnabled = false;
-    new ImageListViewImagePaintController(listView).enabled = true;
-    new ImageListViewInitStateIndicationPaintController(listView);
+    new ImageListViewMouseWindowingController(ui.listView);
+    new ImageListViewMouseZoomPanController(ui.listView).doubleClickResetEnabled = false;
+    new ImageListViewImagePaintController(ui.listView).enabled = true;
+    new ImageListViewInitStateIndicationPaintController(ui.listView);
     if (enableROIs) {
-        new ImageListViewRoiInputEventController(listView);
-        new ImageListViewRoiPaintController(listView).setEnabled(true);
+        new ImageListViewRoiInputEventController(ui.listView);
+        new ImageListViewRoiPaintController(ui.listView).setEnabled(true);
     }
 
-    sssc = new ImageListViewSelectionScrollSyncController(listView);
+    var sssc = new ImageListViewSelectionScrollSyncController(ui.listView);
     sssc.scrollPositionTracksSelection = true;
     sssc.selectionTracksScrollPosition = true;
     sssc.allowEmptySelection = false;
@@ -291,11 +288,11 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
                         );
         }
     });
-    controllers.ptc.controlledImageListView = listView;
+    controllers.ptc.controlledImageListView = ui.listView;
     controllers.ptc.enabled = true;
 
     if (enableMouseMeasurements) {
-        new ImageListViewMouseMeasurementController(listView).enabled = true;
+        new ImageListViewMouseMeasurementController(ui.listView).enabled = true;
     }
 
     var toolbar = new JToolBar();
@@ -308,13 +305,13 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
 
     if (useInlineEnlargedView) {
         var scaleModeCombo = new JComboBox();
-        listView.getSupportedScaleModes().foreach(function(sm) {
+        ui.listView.getSupportedScaleModes().foreach(function(sm) {
             scaleModeCombo.addItem(sm);
         });
         toolbar.add(scaleModeCombo);
         scaleModeCombo.editable = false;
         Bindings.createAutoBinding(UpdateStrategy.READ_WRITE,
-            listView, BeanProperty.create("scaleMode"),
+            ui.listView, BeanProperty.create("scaleMode"),
             scaleModeCombo, BeanProperty.create("selectedItem")).bind();
     }
 
@@ -322,9 +319,9 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
         function() {
             controllers.wndAllController.runWithControllerInhibited(new Runnable({
                 run: function() {
-                    var selIdx = listView.getSelectedIndex();
-                    if (selIdx >= 0 && selIdx < listView.getLength()) {
-                        var cell = listView.getCell(selIdx);
+                    var selIdx = ui.listView.getSelectedIndex();
+                    if (selIdx >= 0 && selIdx < ui.listView.getLength()) {
+                        var cell = ui.listView.getCell(selIdx);
                         setWindowingToQC(cell);
                     }
                 }
@@ -336,7 +333,7 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
         resetAllWindowing(panel);
     }));
 
-    controllers.wndAllController = new ImageListViewWindowingApplyToAllController(listView);
+    controllers.wndAllController = new ImageListViewWindowingApplyToAllController(ui.listView);
     controllers.wndAllController.ignoreNonInteractiveChanges = false;
     controllers.wndAllController.enabled = true;
     var wndAllCheckbox = new JCheckBox("wA");
@@ -356,9 +353,9 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
     toolbar.add(createAction("zRST", "Reset Zoom/Pan", function() {
         controllers.zpAllController.runWithControllerInhibited(new Runnable({
             run: function() {
-                var selIdx = listView.getSelectedIndex();
-                if (selIdx != -1 && listView.isVisibleIndex(selIdx)) {
-                    var cell = listView.getCell(selIdx);
+                var selIdx = ui.listView.getSelectedIndex();
+                if (selIdx != -1 && ui.listView.isVisibleIndex(selIdx)) {
+                    var cell = ui.listView.getCell(selIdx);
                     cell.setCenterOffset(0, 0);
                     var cellImgDisplaySize = cell.getLatestSize();
                     var cz = getUnscaledPreferredCellSize(cell);
@@ -378,7 +375,7 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
         }));
      }));
 
-    controllers.zpAllController = new ImageListViewZoomPanApplyToAllController(listView);
+    controllers.zpAllController = new ImageListViewZoomPanApplyToAllController(ui.listView);
     controllers.zpAllController.ignoreNonInteractiveChanges = false;
     controllers.zpAllController.enabled = true;
     var zpAllCheckbox = new JCheckBox("zA");
@@ -410,8 +407,8 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
                         //slider.setLut(lut);
                     }
                     print("activating lut: " + lut);
-                    for (var i = 0; i < listView.getLength(); i++) {
-                        listView.getCell(i).setLookupTable(lut);
+                    for (var i = 0; i < ui.listView.getLength(); i++) {
+                        ui.listView.getCell(i).setLookupTable(lut);
                     }
                 }
             }
@@ -420,7 +417,7 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
     }
 
     if (enableLUTscale) {
-        var plutc = new ImageListViewPrintLUTController(listView, 4, ImageListViewPrintLUTController.ScaleType.ABSOLUTE);
+        var plutc = new ImageListViewPrintLUTController(ui.listView, 4, ImageListViewPrintLUTController.ScaleType.ABSOLUTE);
         plutc.enabled = true;
     }
 
@@ -609,9 +606,9 @@ function frameDisposing(frame, frameNr, brContext) {
 }
 
 /**
- * Called this user clicked OK on
- * the form to finish a case. formResult already written to
- * brContext.currentCase.result?
+ * Called when the user submitted
+ * the eCRF form to finish a case. formResult is already written to
+ * brContext.currentCase.result.
  */
 function caseFinished(brContext) {
 }
