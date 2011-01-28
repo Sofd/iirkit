@@ -117,9 +117,9 @@ public class CaseRunner implements BRContext {
         });
     }
 
-    protected void initializeViewPanelsFor(Case c, BRFrameView frame, int frameNo) {
+    protected void initializeViewPanelsFor(Case c, BRFrameView frame, int frameNr) {
         HangingProtocol hp = c.getHangingProtocol();
-        SeriesGroup serGrp = hp.getSeriesGroups().get(frameNo);
+        SeriesGroup serGrp = hp.getSeriesGroups().get(frameNr);
         int i;
         //create new lists if necessary (we never delete once-created lists, only remove them from the layout)
         for (i = 0; i < serGrp.getSeriesUrlsCount(); i++) {
@@ -128,11 +128,11 @@ public class CaseRunner implements BRContext {
             }
             BRViewPanel vp = frame.getViewPanel(i);
             String serUrl = serGrp.getSeriesUrl(i);
-            brHandler.initializeViewPanel(vp, serUrl, this);
+            brHandler.initializeViewPanel(vp, serUrl, this, frameNr, i);
         }
         //reset model in unused lists
         for (; i < frame.getViewPanelsCount(); i++) {
-            brHandler.resetViewPanel(frame.getViewPanel(i), this);
+            brHandler.resetViewPanel(frame.getViewPanel(i), this, frameNr, i);
         }
         frame.setDisplayRange(0, serGrp.getSeriesUrlsCount() - 1);
         frame.setActiveViewPanelsCount(serGrp.getSeriesUrlsCount());

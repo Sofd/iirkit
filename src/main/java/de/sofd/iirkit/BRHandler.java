@@ -172,8 +172,8 @@ class BRHandler {
      * may be reused between cases). The method should place and
      * intialize the frame (not the view panels/listViews inside it)
      */
-    void initializeFrame(BRFrameView frame, int frameNo, BRContext brContext) {
-        callJsFunction("initializeFrame", frame, frameNo, brContext);
+    void initializeFrame(BRFrameView frame, int frameNr, BRContext brContext) {
+        callJsFunction("initializeFrame", frame, frameNr, brContext);
     }
 
     Rectangle getFormFrameBounds(BRContext brContext) {
@@ -185,8 +185,8 @@ class BRHandler {
         callJsFunction("initializeFormFrame", formFrame, brContext);
     }
 
-    void initializeViewPanel(BRViewPanel panel, String seriesUrl, BRContext brContext) {
-        callJsFunction("initializeViewPanel", panel, seriesUrl, brContext);
+    void initializeViewPanel(BRViewPanel panel, String seriesUrl, BRContext brContext, int frameNr, int panelNr) {
+        callJsFunction("initializeViewPanel", panel, seriesUrl, brContext, frameNr, panelNr);
     }
 
     /**
@@ -195,7 +195,7 @@ class BRHandler {
      * @param panel
      * @param brContext
      */
-    void resetViewPanel(BRViewPanel panel, BRContext brContext) {
+    void resetViewPanel(BRViewPanel panel, BRContext brContext, int frameNr, int panelNr) {
         callJsFunction("resetViewPanel", panel, brContext);
     }
 

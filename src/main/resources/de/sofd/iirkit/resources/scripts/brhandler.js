@@ -138,19 +138,19 @@ modelFactory.setAsyncMode(false);
  *
  * You may place arbitrary data into the frame using frame,putAttribute(key,value)/getAttribute(key)
  */
-function initializeFrame(frame, frameNo, brContext) {
+function initializeFrame(frame, frameNr, brContext) {
     print("initializeFrame");
     var nFrames = brContext.currentCase.hangingProtocol.seriesGroups.size();
     if (nFrames <= nScreens) {
         // frame n on screen n
-        frame.frame.setBounds(screens[frameNo].defaultConfiguration.bounds);
+        frame.frame.setBounds(screens[frameNr].defaultConfiguration.bounds);
     } else {
         //frames horizontally distributed over the whole display area
         var w = screens[nScreens-1].defaultConfiguration.bounds.maxX;
         var h = screens[nScreens-1].defaultConfiguration.bounds.maxY;
-        frame.frame.setBounds(w * frameNo / nFrames, 0, w / nFrames, h);
+        frame.frame.setBounds(w * frameNr / nFrames, 0, w / nFrames, h);
     }
-    frame.frame.title = "Window " + frameNo;
+    frame.frame.title = "Window " + frameNr;
     frame.frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE;
     frame.putAttribute("ui", {});
     frame.putAttribute("isInitialized", "true");
@@ -194,13 +194,13 @@ var useInlineEnlargedView = System.getProperty("iirkit.useInlineEnlargedView");
  *
  * You may place arbitrary data into the panel using panel.putAttribute(key,value)/getAttribute(key)
  */
-function initializeViewPanel(panel, seriesUrl, brContext) {
+function initializeViewPanel(panel, seriesUrl, brContext, frameNr, panelNr) {
     if (null == modelFactory.getModel(seriesUrl)) {
         modelFactory.addModel(seriesUrl, new File(seriesUrl));
     }
     var seriesModel = modelFactory.getModel(seriesUrl);
     if (!panel.getAttribute("ui")) {
-        doInitializeViewPanel(panel, seriesModel, brContext);
+        doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr);
     }
     panel.getAttribute("ui").listView.model = seriesModel;
 }
@@ -212,12 +212,14 @@ function initializeViewPanel(panel, seriesUrl, brContext) {
  * @param panel
  * @param brContext
  */
-function resetViewPanel(panel, brContext) {
+function resetViewPanel(panel, brContext, frameNr, panelNr) {
     var ui = panel.getAttribute("ui");
     ui.listView.setModel(new DefaultListModel());
 }
 
-function doInitializeViewPanel(panel, seriesModel, brContext) {
+var infoMode = 0;
+
+function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) {
     panel.setLayout(new BorderLayout());
     var listView = new JGridImageListView();
     listView.scaleMode = new JGridImageListView.MyScaleMode(1, 1);
@@ -272,8 +274,6 @@ function doInitializeViewPanel(panel, seriesModel, brContext) {
 
     controllers.ptc = new JavaAdapter(ImageListViewPrintTextToCellsController, {
         getTextToPrint: function(cell) {
-            var infoMode = panel.getAttribute("infoMode");
-            if (!infoMode) { infoMode = 0; }
             if (infoMode == 0) {
                 return newJavaStrArr();
             }
@@ -557,12 +557,9 @@ function caseStartingPostFrameInitialization(brContext) {
     frames.foreach(function(frameView) {
         frameView.mainToolBar.removeAll();
         frameView.mainToolBar.add(createAction("Info", "toggle info display", function() {
+            infoMode = (infoMode + 1) % 2;
             frames.foreach(function(frame) {
-                frame.getActiveViewPanels().toArray().foreach(function(vp) {
-                    var infoMode = parseInt(vp.getAttribute("infoMode"));
-                    if (!infoMode) { infoMode = 0; }
-                    infoMode = (infoMode + 1) % 2;
-                    vp.putAttribute("infoMode", infoMode);
+                frame.activeViewPanels.toArray().foreach(function(vp) {
                     vp.getAttribute("ui").listView.refreshCells();
                 });
             });
@@ -608,7 +605,7 @@ function caseStartingPostFrameInitialization(brContext) {
 /**
  * A frame is about to be disposed.
  */
-function frameDisposing(frame, frameNo, brContext) {
+function frameDisposing(frame, frameNr, brContext) {
 }
 
 /**
