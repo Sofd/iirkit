@@ -1,8 +1,11 @@
 package de.sofd.iirkit.form;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
+import java.util.Collection;
 import static java.util.Map.Entry;
 
 /**
@@ -12,15 +15,15 @@ import static java.util.Map.Entry;
 public class FormDoneEvent {
 
     private String submitUrl;
-    private Map<String,String> requestParams;
+    private Multimap<String, String> requestParams;
     private String formResult;
 
     public FormDoneEvent() {
     }
 
-    public FormDoneEvent(String submitUrl, Map<String,String> requestParams) {
+    public FormDoneEvent(String submitUrl, Multimap<String,String> requestParams) {
         this.submitUrl = submitUrl;
-        this.requestParams = Collections.unmodifiableMap(requestParams);
+        this.requestParams = Multimaps.unmodifiableMultimap(requestParams);
     }
 
     public boolean isFormSubmitted() {
@@ -31,21 +34,19 @@ public class FormDoneEvent {
         return submitUrl;
     }
 
-    public Map<String, String> getRequestParams() {
+    public Multimap<String, String> getRequestParams() {
         return requestParams;
     }
 
     public String getFormResult() {
         if (null == formResult) {
-            StringBuilder sb = new StringBuilder();
-            for (Iterator<Entry<String,String>> entryIt = requestParams.entrySet().iterator(); entryIt.hasNext();) {
-                Entry<String,String> e = entryIt.next();
-                sb.append("").append(e.getKey()).append("=").append(e.getValue());
-                if (entryIt.hasNext()) {
-                    sb.append("&");
+            Collection<String> nameValuePairs = Collections2.transform(requestParams.entries(), new Function<Entry<String,String>, String>() {
+                @Override
+                public String apply(Entry<String, String> e) {
+                    return e.getKey() + "=" + e.getValue();
                 }
-            }
-            formResult = sb.toString();
+            });
+            formResult = Joiner.on("&").join(nameValuePairs);
         }
         return formResult;
     }
