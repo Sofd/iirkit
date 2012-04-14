@@ -5,7 +5,6 @@ import com.trolltech.qt.gui.QApplication;
 import de.sofd.iirkit.App;
 import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import javax.swing.SwingUtilities;
 
@@ -13,8 +12,7 @@ import javax.swing.SwingUtilities;
  * Usage: Create a FormRunner, register an event listener that is called when
  * the runner is finished, call FormRunner#start(formUrl).
  * <p>
- * The runner normally finishes when the user has submitted the form (in which
- * case the form result will be in {@link #getLastFormResult() }), or has
+ * The runner normally finishes when the user has submitted the form, or has
  * canceled the runner (normally by closing the form window without submitting
  * the form). The runner may also be finished externally by calling #stop().
  *
@@ -146,7 +144,9 @@ public class FormRunner {
         QApplication.invokeLater(new Runnable() {
             @Override
             public void run() {
-                formFrame.close();
+                if (null != formFrame) {
+                    formFrame.close();
+                }
             }
         });
     }
@@ -162,7 +162,9 @@ public class FormRunner {
         QApplication.invokeLater(new Runnable() {
             @Override
             public void run() {
-                formFrame.close();
+                if (null != formFrame) {
+                    formFrame.close();
+                }
             }
         });
         if (!isRunning) {

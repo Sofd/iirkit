@@ -72,7 +72,7 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public List<Case> getAllCases() {
-        return jdbcTemplate.query("select userName, caseNr, hangingProtocol, result from iircase", new CaseRowMapper());
+        return jdbcTemplate.query("select userName, caseNr, hangingProtocol, result from iircase order by caseNr asc", new CaseRowMapper());
     }
 
     @Override

@@ -5,6 +5,8 @@ import de.sofd.iirkit.service.Case;
 import de.sofd.iirkit.service.IirService;
 import de.sofd.iirkit.service.User;
 import java.awt.Toolkit;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
@@ -27,9 +29,9 @@ public class SessionControlDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(SessionControlDialog.class);
 
     private App app;
-    private IirService iirService;
-    private SecurityContext securityContext;
-    private CaseRunner caseRunner;
+    private final IirService iirService;
+    private final SecurityContext securityContext;
+    private final CaseRunner caseRunner;
 
     /** Creates new form SessionSelectionDialog */
     public SessionControlDialog(App app, IirService iirSvc, BRHandler brHandler, SecurityContext securityCtx, java.awt.Frame parent, boolean modal) {
@@ -46,6 +48,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
         rereadButton.setEnabled(false);
         logButton.setEnabled(false);
         okButton.setEnabled(false);
+        auditButton.setEnabled(false);
         //unlockButton.setEnabled(false);
         if (securityContext.getAuthority().equals(SecurityContext.Authority.Manager)) {
             //unlockButton.setVisible(true);
@@ -84,17 +87,24 @@ public class SessionControlDialog extends javax.swing.JDialog {
                         okButton.setEnabled(nRemainingCases > 0 && selectedUser.equals(securityContext.getUser()));
                         //clearButton.setEnabled(false);
                         logButton.setEnabled(true);
+                        auditButton.setEnabled(true);
                     } else {
                         okButton.setEnabled(false);
                         //clearButton.setEnabled(false);
                         logButton.setEnabled(true);
                         rereadButton.setEnabled(false);
                         //unlockButton.setEnabled(false);
+                        auditButton.setEnabled(false);
                     }
                 }
             }
         });
         setTitle(StringUtils.substringBefore(getTitle(), "-") + "- " + securityContext.getUser().getName() + " - " + securityContext.getAuthority());
+    }
+
+    @Override
+    public java.awt.Frame getParent() {
+        return (java.awt.Frame) super.getParent();
     }
 
     @Action
@@ -140,16 +150,39 @@ public class SessionControlDialog extends javax.swing.JDialog {
 
     @Action
     public void auditAction() {
-        /*
-        if (sessionList.getSelectedIndex() > -1) {
-            BlindedReadingContextCreationResult blindedReadingContextCreationResult = Context.getBlindedReadingContext().create(sessionList.getSelectedIndex(), BlindedReadingContext.Mode.AUDIT);
-            if (blindedReadingContextCreationResult.equals(BlindedReadingContextCreationResult.OK)) {
-                this.setVisible(false);
-            }
+        User u = (User) sessionList.getSelectedValue();
+        if (u != null) {
+            new AuditSessionRunner(u).runSession();
         } else {
             Toolkit.getDefaultToolkit().beep();
         }
-         */
+    }
+
+    protected class AuditSessionRunner {
+        private final User user;
+        public AuditSessionRunner(User user) {
+            this.user = user;
+        }
+        public void runSession() {
+            SessionControlDialog.this.setVisible(false);
+            CaseSelectionDialog csdiag = new CaseSelectionDialog(SessionControlDialog.this.getParent(), user, iirService);
+            csdiag.addSelectedCaseChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    Case c = (Case) evt.getNewValue();
+                    logger.debug("auditing case: " + c);
+                }
+            });
+            csdiag.addClosedListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    caseRunner.disposeFrames();
+                    SessionControlDialog.this.setVisible(true);
+                }
+            });
+            csdiag.setVisible(true);
+        }
+
     }
 
     @Action
@@ -269,6 +302,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
         rereadButton = new javax.swing.JButton();
         logButton = new javax.swing.JButton();
+        auditButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         sessionList = new javax.swing.JList();
 
@@ -300,7 +334,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel1)
                     .add(jLabel2))
-                .addContainerGap(889, Short.MAX_VALUE))
+                .addContainerGap(903, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -342,6 +376,10 @@ public class SessionControlDialog extends javax.swing.JDialog {
         logButton.setText(resourceMap.getString("logButton.text")); // NOI18N
         logButton.setName("logButton"); // NOI18N
 
+        auditButton.setAction(actionMap.get("auditAction")); // NOI18N
+        auditButton.setText(resourceMap.getString("auditButton.text")); // NOI18N
+        auditButton.setName("auditButton"); // NOI18N
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -351,7 +389,9 @@ public class SessionControlDialog extends javax.swing.JDialog {
                 .add(rereadButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(logButton)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 653, Short.MAX_VALUE)
+                .add(18, 18, 18)
+                .add(auditButton)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 589, Short.MAX_VALUE)
                 .add(cancelButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(okButton)
@@ -365,7 +405,8 @@ public class SessionControlDialog extends javax.swing.JDialog {
                     .add(okButton)
                     .add(cancelButton)
                     .add(rereadButton)
-                    .add(logButton))
+                    .add(logButton)
+                    .add(auditButton))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -429,6 +470,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_sessionListKeyPressed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton auditButton;
     protected javax.swing.JButton cancelButton;
     private javax.swing.JFileChooser exportFileChooser;
     private javax.swing.JLabel jLabel1;
@@ -441,5 +483,4 @@ public class SessionControlDialog extends javax.swing.JDialog {
     private javax.swing.JButton rereadButton;
     private javax.swing.JList sessionList;
     // End of variables declaration//GEN-END:variables
-    static final Logger log4jLogger = Logger.getLogger(SessionControlDialog.class);
 }
