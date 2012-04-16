@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
     static final Logger logger = Logger.getLogger(FormFrame.class);
 
     private QWebView webView;
+    private String initialFormContent;
     private QAction forward;
     private QAction backward;
     private QAction reload;
@@ -40,12 +41,13 @@ import org.apache.log4j.Logger;
     private FormDoneEvent formDoneEvent;
     private final Map<String, Object> attributes = new HashMap<String, Object>();
 
-    public FormFrame(String url) {
-        this(null, url);
+    public FormFrame(String url, String initialFormContent) {
+        this(null, url, initialFormContent);
     }
 
-    public FormFrame(QWidget parent, final String url) {
+    public FormFrame(QWidget parent, final String url, String initialFormContent) {
         super(parent);
+        this.initialFormContent = initialFormContent;
 
         webView = new QWebView();
         webView.setPage(new EcrfSubmitHandlingWebPage());
@@ -134,6 +136,9 @@ import org.apache.log4j.Logger;
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("jquery-1.7.2.min.js"));
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("URI.min.js"));
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("formutils.js"));
+            if (null != initialFormContent) {
+                setFormContents(initialFormContent);
+            }
             statusBar().showMessage("Loaded.");
         } catch (Exception e) {
             statusBar().showMessage("ERROR: " + e.getLocalizedMessage());
@@ -209,6 +214,7 @@ import org.apache.log4j.Logger;
         webView.loadFinished.disconnect(this);
         formDoneEvent = new FormDoneEvent();  //"cancelled" event
         if (null != formDoneCallback) {
+            logger.debug("FormFrame#closeEvent formDoneCallback.run()");
             formDoneCallback.run();
         }
     }
@@ -244,7 +250,7 @@ import org.apache.log4j.Logger;
     public static void main(String args[]) {
         QApplication.initialize(args);
 
-        FormFrame widget = new FormFrame("/home/olaf/hieronymusr/iirkit-test/ecrf/312046_11.html");
+        FormFrame widget = new FormFrame("/home/olaf/hieronymusr/iirkit-test/ecrf/312046_11.html", null);
         widget.show();
 
         QApplication.exec();

@@ -50,7 +50,7 @@
     <Component class="javax.swing.JButton" name="exitButton">
       <Properties>
         <Property name="action" type="javax.swing.Action" editor="org.netbeans.modules.swingapp.ActionEditor">
-          <action class="de.sofd.iirkit.CaseSelectionDialog" id="exitAction" methodName="exitAction"/>
+          <action class="de.sofd.iirkit.CaseSelectionDialog" id="close" methodName="close"/>
         </Property>
         <Property name="text" type="java.lang.String" resourceKey="exitButton.text"/>
         <Property name="name" type="java.lang.String" value="exitButton" noResource="true"/>

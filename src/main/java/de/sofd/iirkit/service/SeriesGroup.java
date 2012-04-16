@@ -40,4 +40,27 @@ public class SeriesGroup {
             throw new IllegalStateException("error reading base dir " + baseDirName + ": " + e.getLocalizedMessage(), e);
         }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final SeriesGroup other = (SeriesGroup) obj;
+        if (this.seriesUrls != other.seriesUrls && (this.seriesUrls == null || !this.seriesUrls.equals(other.seriesUrls))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 19 * hash + (this.seriesUrls != null ? this.seriesUrls.hashCode() : 0);
+        return hash;
+    }
+
 }

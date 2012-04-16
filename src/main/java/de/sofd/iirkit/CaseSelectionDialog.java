@@ -83,7 +83,15 @@ public class CaseSelectionDialog extends javax.swing.JDialog {
     }
 
     public void setSelectedCase(Case c) {
-        caseList.setSelectedValue(c, true);
+        int n = caseList.getModel().getSize();
+        for (int i = 0; i < n; i++) {
+            Case c2 = (Case) caseList.getModel().getElementAt(i);
+            if (c.getNumber() == c2.getNumber()) {
+                caseList.setSelectedIndex(i);
+                return;
+            }
+        }
+        caseList.setSelectedIndex(-1);
     }
 
     public void addSelectedCaseChangeListener(PropertyChangeListener l) {
@@ -135,7 +143,7 @@ public class CaseSelectionDialog extends javax.swing.JDialog {
         setName("Form"); // NOI18N
 
         javax.swing.ActionMap actionMap = org.jdesktop.application.Application.getInstance(de.sofd.iirkit.App.class).getContext().getActionMap(CaseSelectionDialog.class, this);
-        exitButton.setAction(actionMap.get("exitAction")); // NOI18N
+        exitButton.setAction(actionMap.get("close")); // NOI18N
         exitButton.setText(resourceMap.getString("exitButton.text")); // NOI18N
         exitButton.setName("exitButton"); // NOI18N
 
@@ -175,7 +183,7 @@ public class CaseSelectionDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     @Action
-    public void exitAction() {
+    public void close() {
         setVisible(false);
         fireClosed();
     }

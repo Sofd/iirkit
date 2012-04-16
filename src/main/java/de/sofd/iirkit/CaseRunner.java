@@ -1,5 +1,6 @@
 package de.sofd.iirkit;
 
+import com.google.common.collect.Multimap;
 import de.sofd.iirkit.form.FormDoneEvent;
 import de.sofd.iirkit.form.FormDoneListener;
 import de.sofd.iirkit.form.FormRunner;
@@ -10,12 +11,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.apache.log4j.Logger;
 
 /**
- * CaseRunner#startCase starts a single case. When the case is finished,
+ * CaseRunner#startCase starts a single case, bringing up image and
+ * form frames as needed. When the case is finished,
  * the CaseRunner puts the result into its result field
  * (but doesn't update the database), and notifies all the registered
  * caseFinishedListeners.
@@ -27,9 +27,11 @@ public class CaseRunner implements BRContext {
     static final Logger logger = Logger.getLogger(CaseRunner.class);
 
     private Case currentCase;
-    private final List<ChangeListener> caseFinishedListeners = new LinkedList<ChangeListener>(); //TODO: specific "CaseDoneEvent"
+    private boolean showPreviousResult, readOnly;
+    private final List<CaseDoneListener> caseDoneListeners = new LinkedList<CaseDoneListener>();
     private final BRHandler brHandler;
     private final App app;
+    private boolean caseRunning = false;
 
     //all frames here...
     private final List<BRFrameView> frames = new ArrayList<BRFrameView>();
@@ -48,17 +50,36 @@ public class CaseRunner implements BRContext {
     }
 
     @Override
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    @Override
+    public boolean isShowPreviousResult() {
+        return showPreviousResult;
+    }
+
+    @Override
     public List<BRFrameView> getCurrentCaseFrames() {
         return Collections.unmodifiableList(frames);
     }
 
     public void startCase(Case c) {
-        logger.info("starting case: " + c);
-        currentCase = c;
+        startCase(c, false, false);
+    }
+
+    public void startCase(Case c, boolean showPreviousResult, boolean readOnly) {
+        if (caseRunning) {
+            throw new IllegalStateException("a case is running, can't start another one");
+        }
+        this.currentCase = c;
+        this.showPreviousResult = showPreviousResult;
+        this.readOnly = readOnly;
         brHandler.caseStarting(this);
         initializeFramesFor(c);
         initializeFormFrameFor(c);
         brHandler.caseStartingPostFrameInitialization(this);
+        caseRunning = true;
     }
 
     protected void initializeFramesFor(Case c) {
@@ -98,24 +119,28 @@ public class CaseRunner implements BRContext {
                 brHandler.initializeFormFrame(formRunner.getFormFrame(), CaseRunner.this);
             }
         });
-        formRunner.start(c.getHangingProtocol().getEcrfUrl(), brHandler.getFormFrameBounds(this));
-        formRunner.addFormDoneListener(new FormDoneListener() {
-            @Override
-            public void formSubmitted(FormDoneEvent event) {
-                formRunner.removeFormDoneListener(this);
-                currentCase.setResult(event.getFormResult());
-                brHandler.caseFinished(CaseRunner.this);
-                fireCaseFinished();
-            }
-
-            @Override
-            public void formCancelled(FormDoneEvent event) {
-                formRunner.removeFormDoneListener(this);
-                //TODO: send specific CaseDoneEvent or similar indicating the case was cancelled
-                System.exit(0);
-            }
-        });
+        formRunner.start(c.getHangingProtocol().getEcrfUrl(), brHandler.getFormFrameBounds(this), isShowPreviousResult() ? c.getResult() : null);
+        formRunner.addFormDoneListener(formDoneListener);
     }
+
+    private FormDoneListener formDoneListener = new FormDoneListener() {
+        @Override
+        public void formSubmitted(FormDoneEvent event) {
+            formRunner.removeFormDoneListener(this);
+            if (!isReadOnly()) {
+                currentCase.setResult(event.getFormResult());
+            }
+            caseRunning = false;
+            brHandler.caseFinished(CaseRunner.this);
+            fireCaseFinished(event.getFormResultMap());
+        }
+        @Override
+        public void formCancelled(FormDoneEvent event) {
+            formRunner.removeFormDoneListener(this);
+            caseRunning = false;
+            fireCaseCancelled();
+        }
+    };
 
     protected void initializeViewPanelsFor(Case c, BRFrameView frame, int frameNr) {
         HangingProtocol hp = c.getHangingProtocol();
@@ -138,7 +163,22 @@ public class CaseRunner implements BRContext {
         frame.setActiveViewPanelsCount(serGrp.getSeriesUrlsCount());
     }
 
+    public boolean isCaseRunning() {
+        return caseRunning;
+    }
+
+    public void stopCurrentCase() {
+        if (!caseRunning) {
+            throw new IllegalStateException("no case is running");
+        }
+        formRunner.cancel();
+        formRunner.removeFormDoneListener(formDoneListener); //will normally have been done by the formDoneListener itself already during cancel()
+    }
+
     public void disposeFrames() {
+        if (caseRunning) {
+            stopCurrentCase();
+        }
         for (BRFrameView frame : frames) {
             frame.getFrame().dispose();
         }
@@ -148,17 +188,26 @@ public class CaseRunner implements BRContext {
 
     //eventually there may be multiple kinds of finishings (e.g. ended, cancelled...)
 
-    public void addCaseFinishedListener(ChangeListener l) {
-        caseFinishedListeners.add(l);
+    public void addCaseDoneListener(CaseDoneListener l) {
+        caseDoneListeners.add(l);
     }
 
-    public void removeCaseFinishedListener(ChangeListener l) {
-        caseFinishedListeners.remove(l);
+    public void removeCaseDoneListener(CaseDoneListener l) {
+        caseDoneListeners.remove(l);
     }
 
-    protected void fireCaseFinished() {
-        for (ChangeListener l : caseFinishedListeners.toArray(new ChangeListener[0])) {
-            l.stateChanged(new ChangeEvent(this));
+    protected void fireCaseFinished(Multimap<String, String> requestParams) {
+        if (requestParams == null) {
+            throw new IllegalArgumentException("case can't finish w/ null requestParams");
+        }
+        for (CaseDoneListener l : caseDoneListeners.toArray(new CaseDoneListener[0])) {
+            l.caseFinished(new CaseDoneEvent(this, requestParams));
+        }
+    }
+
+    protected void fireCaseCancelled() {
+        for (CaseDoneListener l : caseDoneListeners.toArray(new CaseDoneListener[0])) {
+            l.caseFinished(new CaseDoneEvent(this, null));
         }
     }
 

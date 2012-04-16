@@ -7,6 +7,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.SwingUtilities;
+import org.apache.log4j.Logger;
 
 /**
  * Usage: Create a FormRunner, register an event listener that is called when
@@ -20,6 +21,8 @@ import javax.swing.SwingUtilities;
  * @author olaf
  */
 public class FormRunner {
+
+    static final Logger logger = Logger.getLogger(FormRunner.class);
 
     private boolean isRunning = false;
     private final List<FormDoneListener> finishedListeners = new ArrayList<FormDoneListener>();
@@ -52,17 +55,21 @@ public class FormRunner {
     }
 
     public void start(final String url) {
-        start(url, null);
+        start(url, null, null);
     }
 
-    public void start(final String url, final Rectangle formBounds) {
+    public void start(final String url, Rectangle formBounds) {
+        start(url, formBounds, null);
+    }
+
+    public void start(final String url, final Rectangle formBounds, final String formContents) {
         if (isRunning) {
             throw new IllegalStateException("FormRunner already running");
         }
         QApplication.invokeLater(new Runnable() {
             @Override
             public void run() {
-                formFrame = new FormFrame(url);
+                formFrame = new FormFrame(url, formContents);
                 formFrame.setFormDoneCallback(new Runnable() {
                     @Override
                     public void run() {
@@ -152,6 +159,7 @@ public class FormRunner {
     }
 
     public void cancel() {
+        fireFinished(new FormDoneEvent());
         stop();
     }
 
@@ -163,13 +171,11 @@ public class FormRunner {
             @Override
             public void run() {
                 if (null != formFrame) {
+                    logger.debug("async formFrame.close() as a result of a FormRunner#stop...");
                     formFrame.close();
                 }
             }
         });
-        if (!isRunning) {
-            throw new IllegalStateException("FormRunner not running");
-        }
         //formFrame.dispose();
         isRunning = false;
         //TODO: fireFinished() unless our caller already did

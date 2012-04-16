@@ -32,4 +32,31 @@ public class HangingProtocol {
         return ecrfUrl;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final HangingProtocol other = (HangingProtocol) obj;
+        if (this.seriesGroups != other.seriesGroups && (this.seriesGroups == null || !this.seriesGroups.equals(other.seriesGroups))) {
+            return false;
+        }
+        if ((this.ecrfUrl == null) ? (other.ecrfUrl != null) : !this.ecrfUrl.equals(other.ecrfUrl)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 23 * hash + (this.seriesGroups != null ? this.seriesGroups.hashCode() : 0);
+        hash = 23 * hash + (this.ecrfUrl != null ? this.ecrfUrl.hashCode() : 0);
+        return hash;
+    }
+
+    
 }

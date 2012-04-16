@@ -9,11 +9,13 @@ import com.google.common.collect.Multimaps;
  */
 public class FormDoneEvent {
 
-    private String submitUrl;
-    private Multimap<String, String> requestParams;
+    private final String submitUrl;
+    private final Multimap<String, String> requestParams;
     private String formResult;
 
     public FormDoneEvent() {
+        submitUrl = null;
+        requestParams = null;
     }
 
     public FormDoneEvent(String submitUrl, Multimap<String,String> requestParams) {
@@ -29,7 +31,7 @@ public class FormDoneEvent {
         return submitUrl;
     }
 
-    public Multimap<String, String> getRequestParams() {
+    public Multimap<String, String> getFormResultMap() {
         return requestParams;
     }
 

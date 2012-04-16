@@ -16,6 +16,8 @@ public interface IirService {
 
     Case getNextCaseOf(User user);
 
+    Case getCaseOf(User user, int caseNr);
+
     int getNumberOfCasesOf(User user);
 
     int getNumberOfDoneCasesOf(User user);

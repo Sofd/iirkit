@@ -10,4 +10,8 @@ import java.util.List;
 public interface BRContext {
     Case getCurrentCase();
     List<BRFrameView> getCurrentCaseFrames();
+
+    boolean isReadOnly();
+
+    boolean isShowPreviousResult();
 }

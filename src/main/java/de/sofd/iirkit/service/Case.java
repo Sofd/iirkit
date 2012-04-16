@@ -153,6 +153,53 @@ public class Case {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Case other = (Case) obj;
+        if (this.number != other.number) {
+            return false;
+        }
+        if (this.user != other.user && (this.user == null || !this.user.equals(other.user))) {
+            return false;
+        }
+        if (this.seriesGroupUrls != other.seriesGroupUrls && (this.seriesGroupUrls == null || !this.seriesGroupUrls.equals(other.seriesGroupUrls))) {
+            return false;
+        }
+        if ((this.ecrfUrl == null) ? (other.ecrfUrl != null) : !this.ecrfUrl.equals(other.ecrfUrl)) {
+            return false;
+        }
+        if ((this.result == null) ? (other.result != null) : !this.result.equals(other.result)) {
+            return false;
+        }
+        if (this.hp != other.hp && (this.hp == null || !this.hp.equals(other.hp))) {
+            return false;
+        }
+        if (this.allAttrs != other.allAttrs && (this.allAttrs == null || !this.allAttrs.equals(other.allAttrs))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 83 * hash + this.number;
+        hash = 83 * hash + (this.user != null ? this.user.hashCode() : 0);
+        hash = 83 * hash + (this.seriesGroupUrls != null ? this.seriesGroupUrls.hashCode() : 0);
+        hash = 83 * hash + (this.ecrfUrl != null ? this.ecrfUrl.hashCode() : 0);
+        hash = 83 * hash + (this.result != null ? this.result.hashCode() : 0);
+        hash = 83 * hash + (this.hp != null ? this.hp.hashCode() : 0);
+        hash = 83 * hash + (this.allAttrs != null ? this.allAttrs.hashCode() : 0);
+        return hash;
+    }
+
+   
+    @Override
     public String toString() {
         return "[Case: nr=" + getNumber() + ", hp=" + getHangingProtocol() + ", res=" + getResult() + "]";
     }

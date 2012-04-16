@@ -251,6 +251,16 @@ public class CsvIirServiceImpl implements IirService {
     }
 
     @Override
+    public Case getCaseOf(User user, int caseNr) {
+        for (Case c : cases) {
+            if (c.getUser().equals(user) && c.getNumber() == caseNr) {
+                return copy(c);
+            }
+        }
+        return null;
+    }
+
+    @Override
     public int update(Case c) {
         for (Case c2 : cases) {
             if (c2.getUser().equals(c.getUser()) && c2.getNumber() == c.getNumber()) {

@@ -31,7 +31,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
     private App app;
     private final IirService iirService;
     private final SecurityContext securityContext;
-    private final CaseRunner caseRunner;
+    private final CaseRunner caseRunner; //TODO: make this per - *SessionRunner? (but then we must take care that there aren't multiple frame sets)
 
     /** Creates new form SessionSelectionDialog */
     public SessionControlDialog(App app, IirService iirSvc, BRHandler brHandler, SecurityContext securityCtx, java.awt.Frame parent, boolean modal) {
@@ -128,15 +128,23 @@ public class SessionControlDialog extends javax.swing.JDialog {
                 logger.info("DONE!");
                 System.exit(0);
             }
-            caseRunner.addCaseFinishedListener(new ChangeListener() {
+            caseRunner.addCaseDoneListener(new CaseDoneListener() {
                 @Override
-                public void stateChanged(ChangeEvent e) {
-                    caseRunner.removeCaseFinishedListener(this);
+                public void caseFinished(CaseDoneEvent e) {
+                    caseRunner.removeCaseDoneListener(this);
                     iirService.update(currentCase);
                     logger.info("Case " + currentCase + " updated with result: " + currentCase.getResult());
                     runSession();
                 }
+                @Override
+                public void caseCancelled(CaseDoneEvent e) {
+                    caseRunner.removeCaseDoneListener(this);
+                    logger.info("case cancelled.");
+                    FormRunner.dispose();
+                    System.exit(0); //TODO: re-show the session control dialog instead?
+                }
             });
+            logger.info("starting case: " + currentCase);
             caseRunner.startCase(currentCase);
         }
 
@@ -159,18 +167,31 @@ public class SessionControlDialog extends javax.swing.JDialog {
     }
 
     protected class AuditSessionRunner {
+        //TODO: ugly code in here. Model this thing as a state machine.
         private final User user;
+        private CaseSelectionDialog csdiag;
+        private CaseDoneListener caseDoneListener;
+
         public AuditSessionRunner(User user) {
             this.user = user;
         }
+
         public void runSession() {
             SessionControlDialog.this.setVisible(false);
-            CaseSelectionDialog csdiag = new CaseSelectionDialog(SessionControlDialog.this.getParent(), user, iirService);
+            csdiag = new CaseSelectionDialog(SessionControlDialog.this.getParent(), user, iirService);
             csdiag.addSelectedCaseChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
                     Case c = (Case) evt.getNewValue();
-                    logger.debug("auditing case: " + c);
+                    if (null != c) {
+                        if (null != caseDoneListener) {
+                            caseRunner.removeCaseDoneListener(caseDoneListener);
+                        }
+                        if (caseRunner.isCaseRunning()) {
+                            caseRunner.stopCurrentCase();
+                        }
+                        startFromCase(c);
+                    }
                 }
             });
             csdiag.addClosedListener(new ChangeListener() {
@@ -183,6 +204,31 @@ public class SessionControlDialog extends javax.swing.JDialog {
             csdiag.setVisible(true);
         }
 
+        private void startFromCase(final Case c) {
+            logger.info("auditing case: " + c);
+            if (null != caseDoneListener) {
+                caseRunner.removeCaseDoneListener(caseDoneListener);
+            }
+            caseRunner.addCaseDoneListener(caseDoneListener = new CaseDoneListener() {
+                @Override
+                public void caseFinished(CaseDoneEvent e) {
+                    caseRunner.removeCaseDoneListener(this);
+                    Case nextCase = iirService.getCaseOf(user, c.getNumber() + 1);
+                    if (nextCase != null) {
+                        csdiag.setSelectedCase(nextCase);
+                    } else {
+                        csdiag.close();
+                    }
+                }
+                @Override
+                public void caseCancelled(CaseDoneEvent e) {
+                    caseRunner.removeCaseDoneListener(this);
+                    caseRunner.disposeFrames();
+                    SessionControlDialog.this.setVisible(true);
+                }
+            });
+            caseRunner.startCase(c, true, true);
+        }
     }
 
     @Action
@@ -238,18 +284,26 @@ public class SessionControlDialog extends javax.swing.JDialog {
                         JOptionPane.showMessageDialog(this, "No reason entered. Reread canceled.", "Warning", JOptionPane.WARNING_MESSAGE);
                     } else {
                         setVisible(false);
-                        logger.info("Reread: " + logText);
                         final Case c = rereadCasesByNumber.get(caseNr);
-                        caseRunner.addCaseFinishedListener(new ChangeListener() {
+                        caseRunner.addCaseDoneListener(new CaseDoneListener() {
                             @Override
-                            public void stateChanged(ChangeEvent e) {
-                                caseRunner.removeCaseFinishedListener(this);
+                            public void caseFinished(CaseDoneEvent e) {
+                                caseRunner.removeCaseDoneListener(this);
                                 caseRunner.disposeFrames();
                                 iirService.update(c);
                                 logger.info("Case " + c + " updated with result: " + c.getResult());
                                 SessionControlDialog.this.setVisible(true);
                             }
+                            @Override
+                            public void caseCancelled(CaseDoneEvent e) {
+                                caseRunner.removeCaseDoneListener(this);
+                                logger.info("case cancelled.");
+                                FormRunner.dispose();
+                                System.exit(0); //TODO: re-show the session control dialog instead?
+                            }
                         });
+                        logger.info("re-reading case: " + c);
+                        logger.info("  re-read reason: " + logText);
                         caseRunner.startCase(c);
                     }
                 }

@@ -104,6 +104,16 @@ public class HsqlIirServiceImpl implements IirService /*, DatabasePopulator*/ {
         return result;
     }
 
+    @Override
+    public Case getCaseOf(User user, int caseNr) {
+        //TODO: UNTESTED
+        Case result = queryForZeroOrOneObject(jdbcTemplate, "select * FROM iircase where userName = ? and caseNr = ?", new CaseRowMapper(), user.getName(), caseNr);
+        if (result != null) {
+            result.setUser(user);
+        }
+        return result;
+    }
+
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     @Override
     public int update(Case c) {
