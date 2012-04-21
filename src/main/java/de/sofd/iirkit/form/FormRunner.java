@@ -6,6 +6,7 @@ import de.sofd.iirkit.App;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
@@ -16,7 +17,13 @@ import org.apache.log4j.Logger;
  * The runner normally finishes when the user has submitted the form, or has
  * canceled the runner (normally by closing the form window without submitting
  * the form). The runner may also be finished externally by calling #stop().
- *
+ * <p>
+ * This runner also provides isolation from the QT thread that runs internally
+ * for displaying the (QT-based) form UIs. To the outside, FormRunner executes
+ * in the Swing thread exclusively (this includes event handlers called by
+ * FormRunner). (Exception: {@link #setFormShownCallback(java.lang.Runnable) })
+ * FormRunner is NOT thread-safe by itself: It must be called from the Swing
+ * thread only.
  *
  * @author olaf
  */
@@ -30,17 +37,20 @@ public class FormRunner {
     private FormFrame formFrame;
     private final App app;
 
+    private static final CountDownLatch qtInitializedSignal = new CountDownLatch(1);
+
     /**
      * There's only one QT thread that runs continuously and is shared
      * by all FormRunners (until FormRunner.dispose()). All FormRunners
      * (if there is more than one) run their QT UI in this thread.
      */
-    private static Thread qtThread = new Thread() {
+    private static Thread qtThread = new Thread("QT event loop") {
 
         @Override
         public void run() {
             QApplication.initialize(new String[0]);
             QApplication.setQuitOnLastWindowClosed(false);
+            qtInitializedSignal.countDown();
             QApplication.exec();
             System.err.println("QT thread finished.");
         }
@@ -51,6 +61,11 @@ public class FormRunner {
         this.app = app;
         if (!qtThread.isAlive()) {
             qtThread.start();
+            try {
+                qtInitializedSignal.await();
+            } catch (InterruptedException ex) {
+                throw new IllegalStateException("UI thread interrupted. SHOULDN'T HAPPEN", ex);
+            }
         }
     }
 
