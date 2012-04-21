@@ -12,13 +12,13 @@ import org.apache.log4j.Logger;
  *
  * @author olaf
  */
-public class FormRunnerTest {
+public class FormRunnerTestApp {
 
-    private static final Logger logger = Logger.getLogger(FormRunnerTest.class);
+    private static final Logger logger = Logger.getLogger(FormRunnerTestApp.class);
 
     private FormRunner fr;
 
-    public FormRunnerTest() {
+    public FormRunnerTestApp() {
         fr = new FormRunner(null);
         JFrame f = new JFrame("FormRunner interactive test");
         JToolBar toolbar = new JToolBar();
@@ -59,7 +59,7 @@ public class FormRunnerTest {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new FormRunnerTest();
+                new FormRunnerTestApp();
             }
         });
     }
