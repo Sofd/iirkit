@@ -26,6 +26,9 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 /**
+ * Qt form frame.
+ *
+ * Not thread-safe; must be run in the Qt thread exclusively.
  *
  * @author olaf
  */
@@ -79,15 +82,7 @@ import org.apache.log4j.Logger;
         reload.triggered.connect(webView, "reload()");
         stop.triggered.connect(webView, "stop()");
 
-        QAction debug1 = toolbar.addAction("debug1");
-        debug1.triggered.connect(this, "debug1()");
-
-        QApplication.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                webView.load(new QUrl(url));
-            }
-        });
+        setUrl(url);
     }
 
     private class EcrfSubmitHandlingWebPage extends QWebPage {
@@ -122,6 +117,12 @@ import org.apache.log4j.Logger;
             }
         }
 
+        @Override
+        protected void javaScriptConsoleMessage(String message, int lineNumber, String sourceID) {
+            super.javaScriptConsoleMessage(message, lineNumber, sourceID);
+            logger.info("JS message: " + sourceID + ":" + lineNumber + ": " + message);
+        }
+
     }
 
     private void loadStarted() {
@@ -147,14 +148,8 @@ import org.apache.log4j.Logger;
         }
     }
 
-    private void debug1() {
-        logger.info("debug1");
-        try {
-            String paramString = "COMP01_Seq4_COMPISC5=1&foo=bar&COMP01_Seq2_COMPISC5=1&sex=male&weight=45&TRIG01_Seq1_TRIGPERF=1&IMAGE01_Seq1_IMAGAV=&examinationTime=1.2.34&ailments=cancer&ailments=syphillis&headeareyenosethroat=normal&height=123&respiratory=normal&ethnicGroup=black&COMP01_Seq1_COMPISC5=2&age=910&ok=OK&COMP01_Seq3_COMPISC5=2&IMAGE01_Seq1_FILMNO=&cardiovascular=abnormal&gastrointestinal=abnormal&birthData=5.6.78";
-            setFormContents(paramString);
-        } catch (Exception e) {
-            logger.error("error running javascript code: " + e.getLocalizedMessage(), e);
-        }
+    public void setUrl(String url) {
+        webView.load(new QUrl(url));
     }
 
     public void setFormContents(Multimap<String, String> params) {
@@ -169,7 +164,6 @@ import org.apache.log4j.Logger;
         sw.setObjectName(formContentsAsQueryString); //hack -- misuse objectName for the paramString
         frame.addToJavaScriptWindowObject("__paramString", sw);
         frame.evaluateJavaScript("__fillForm(window.__paramString.objectName)");
-        //TODO: log JS errors
     }
 
     /**
@@ -245,15 +239,6 @@ import org.apache.log4j.Logger;
 
     public Object removeAttribute(String name) {
         return attributes.remove(name);
-    }
-
-    public static void main(String args[]) {
-        QApplication.initialize(args);
-
-        FormFrame widget = new FormFrame("/home/olaf/hieronymusr/iirkit-test/ecrf/312046_11.html", null);
-        widget.show();
-
-        QApplication.exec();
     }
 
 }

@@ -14,9 +14,7 @@ function __fillForm(paramString) {
         }
         switch (input.type) {
         case 'text':
-            if (values.length > 0) {
-                input.value = values[0];
-            }
+            input.value = (values.length > 0 ? values[0] : "");
             break;
 
         case 'checkbox':
