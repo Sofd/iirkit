@@ -35,11 +35,13 @@ public class FormFrameTestApp {
         QToolBar toolbar = controllerFrame.addToolBar("Actions");
         toolbar.setFloatable(false);
         toolbar.addAction("show").triggered.connect(this, "showForm()");
-        toolbar.addAction("close").triggered.connect(this, "closeForm()");
+        toolbar.addAction("hide").triggered.connect(this, "hideForm()");
         toolbar.addAction("form1").triggered.connect(this, "form1()");
         toolbar.addAction("form2").triggered.connect(this, "form2()");
         toolbar.addAction("fill1").triggered.connect(this, "fill1()");
         toolbar.addAction("fill2").triggered.connect(this, "fill2()");
+        toolbar.addAction("formfill1").triggered.connect(this, "formfill1()");
+        toolbar.addAction("formfill2").triggered.connect(this, "formfill2()");
         toolbar.addAction("clear").triggered.connect(this, "clear()");
         toolbar.addAction("exit").triggered.connect(this, "exit()");
         controllerFrame.show();
@@ -49,16 +51,18 @@ public class FormFrameTestApp {
         formFrame.show();
     }
 
-    private void closeForm() {
-        formFrame.close();
+    private void hideForm() {
+        formFrame.hide();
     }
 
     private void form1() {
         formFrame.setUrl(FORM1_URL);
+        logger.debug("form1 loaded");
     }
 
     private void form2() {
         formFrame.setUrl(FORM2_URL);
+        logger.debug("form2 loaded");
     }
 
     private void fill1() {
@@ -73,6 +77,16 @@ public class FormFrameTestApp {
         params.put("zip", "10178");
         params.put("city", "Berlin");
         formFrame.setFormContents(params);
+    }
+
+    private void formfill1() {
+        form1();
+        fill1();
+    }
+
+    private void formfill2() {
+        form2();
+        fill2();
     }
 
     private void clear() {

@@ -187,7 +187,7 @@ public class FormRunner {
             public void run() {
                 if (null != formFrame) {
                     logger.debug("async formFrame.close() as a result of a FormRunner#stop...");
-                    formFrame.close();
+                    formFrame.close();  //TODO: use hide() instead
                 }
             }
         });

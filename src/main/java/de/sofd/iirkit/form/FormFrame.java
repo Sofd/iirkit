@@ -7,7 +7,6 @@ import com.trolltech.qt.QPair;
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QUrl;
 import com.trolltech.qt.gui.QAction;
-import com.trolltech.qt.gui.QApplication;
 import com.trolltech.qt.gui.QCloseEvent;
 import com.trolltech.qt.gui.QMainWindow;
 import com.trolltech.qt.gui.QToolBar;
@@ -134,9 +133,11 @@ import org.apache.log4j.Logger;
 
     private void loadDone() {
         try {
+            logger.debug("loading JS utilities...");
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("jquery-1.7.2.min.js"));
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("URI.min.js"));
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("formutils.js"));
+            logger.debug("DONE loading JS utilities.");
             if (null != initialFormContent) {
                 setFormContents(initialFormContent);
             }
@@ -150,6 +151,8 @@ import org.apache.log4j.Logger;
 
     public void setUrl(String url) {
         webView.load(new QUrl(url));
+        //TODO: loadDone is called asynchronously (albeit still in the Qt thread)
+        // after webView.load has returned
     }
 
     public void setFormContents(Multimap<String, String> params) {
