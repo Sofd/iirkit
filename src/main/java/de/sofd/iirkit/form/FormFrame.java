@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import com.trolltech.qt.QPair;
+import com.trolltech.qt.core.QEventLoop;
 import com.trolltech.qt.core.QObject;
 import com.trolltech.qt.core.QUrl;
 import com.trolltech.qt.gui.QAction;
@@ -42,6 +43,10 @@ import org.apache.log4j.Logger;
     private QAction stop;
     private FormDoneEvent formDoneEvent;
     private final Map<String, Object> attributes = new HashMap<String, Object>();
+
+    private boolean loadPending = false;
+    private final QEventLoop waitForLoadEventLoop = new QEventLoop();
+    private Exception loadError = null;
 
     public FormFrame(String url, String initialFormContent) {
         this(null, url, initialFormContent);
@@ -142,17 +147,30 @@ import org.apache.log4j.Logger;
                 setFormContents(initialFormContent);
             }
             statusBar().showMessage("Loaded.");
+            loadError = null;
         } catch (Exception e) {
             statusBar().showMessage("ERROR: " + e.getLocalizedMessage());
-            //TODO: set some permant error state
+            loadError = e;
             throw new IllegalStateException("form loading/JS error: " + e.getLocalizedMessage(), e);
+        } finally {
+            if (loadPending) {
+                waitForLoadEventLoop.exit();
+            }
         }
     }
 
     public void setUrl(String url) {
         webView.load(new QUrl(url));
-        //TODO: loadDone is called asynchronously (albeit still in the Qt thread)
-        // after webView.load has returned
+        loadPending = true;
+        try {
+            waitForLoadEventLoop.exec();
+        } finally {
+            loadPending = false;
+            logger.debug("waitForLoadEventLoop finished.");
+        }
+        if (loadError != null) {
+            throw new IllegalStateException("form load error: " + loadError, loadError);
+        }
     }
 
     public void setFormContents(Multimap<String, String> params) {
