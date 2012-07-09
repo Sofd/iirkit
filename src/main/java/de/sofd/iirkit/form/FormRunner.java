@@ -5,9 +5,11 @@ import com.trolltech.qt.core.QCoreApplication;
 import com.trolltech.qt.gui.QApplication;
 import de.sofd.iirkit.App;
 import java.awt.Rectangle;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
@@ -45,6 +47,7 @@ public class FormRunner {
     private Runnable formShownCallback;
     private FormFrame formFrame;
     private final App app;
+    private boolean isInQtExec = false;
 
     private static final CountDownLatch qtInitializedSignal = new CountDownLatch(1);
 
@@ -65,6 +68,33 @@ public class FormRunner {
         }
 
     };
+
+    protected void qtExec(Runnable r) {
+        boolean wasInQtExec = isInQtExec;
+        isInQtExec = true;
+        try {
+            QApplication.invokeAndWait(r);
+        } finally {
+            isInQtExec = wasInQtExec;
+        }
+    }
+
+    protected void swingExec(Runnable r) {
+        if (isInQtExec) {
+            //if we're in a qtExec(),
+            // calling SwingUtilities.invokeAndWait would lead to a deadlock
+            // (we assume that swingExec is called from the Qt thread)
+            SwingUtilities.invokeLater(r);
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(r);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException("swing invokeAndWait interrupted.", ex);
+            } catch (InvocationTargetException ex) {
+                throw new RuntimeException("swing invokeAndWait exception", ex.getCause());
+            }
+        }
+    }
 
     public FormRunner(App app) {
         this.app = app;
@@ -96,28 +126,27 @@ public class FormRunner {
      */
     public void openForm(final String url, final Rectangle formBounds, final String formContentsAsQueryString) {
         ensureFormFrameExists();
-        QApplication.invokeAndWait(new Runnable() {
+        qtExec(new Runnable() {
             @Override
             public void run() {
-//                formFrame.setFormDoneCallback(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        final FormDoneEvent formDoneEvent = formFrame.getFormDoneEvent();
-//                        formFrame.setFormDoneCallback(null);
-//                        try {
-//                            SwingUtilities.invokeAndWait(new Runnable() {
-//
-//                                @Override
-//                                public void run() {
-//                                    stop();
-//                                    fireFinished(formDoneEvent);
-//                                }
-//                            });
-//                        } catch (Exception ex) {
-//                            throw new RuntimeException("qt invocation failed: " + ex.getLocalizedMessage(), ex);
-//                        }
-//                    }
-//                });
+                formFrame.setFormDoneCallback(new Runnable() {
+                    @Override
+                    public void run() {
+                        final FormDoneEvent formDoneEvent = formFrame.getFormDoneEvent();
+                        formFrame.setFormDoneCallback(null);
+                        try {
+                            swingExec(new Runnable() {
+                                @Override
+                                public void run() {
+                                    stop();
+                                    fireFinished(formDoneEvent);
+                                }
+                            });
+                        } catch (Exception ex) {
+                            throw new RuntimeException("qt invocation failed: " + ex.getLocalizedMessage(), ex);
+                        }
+                    }
+                });
                 if (null != url) {
                     formFrame.setUrl(url);
                     if (null != formContentsAsQueryString) {
@@ -136,7 +165,7 @@ public class FormRunner {
     }
 
     protected void ensureFormFrameExists() {
-        QApplication.invokeAndWait(new Runnable() {
+        qtExec(new Runnable() {
             @Override
             public void run() {
                 if (null == formFrame) {
@@ -148,7 +177,7 @@ public class FormRunner {
 
     public void setFormContents(final Multimap<String, String> params) {
         ensureFormFrameExists();
-        QApplication.invokeAndWait(new Runnable() {
+        qtExec(new Runnable() {
             @Override
             public void run() {
                 formFrame.setFormContents(params);
@@ -158,7 +187,7 @@ public class FormRunner {
 
     public void setFormContents(final String formContentsAsQueryString) {
         ensureFormFrameExists();
-        QApplication.invokeAndWait(new Runnable() {
+        qtExec(new Runnable() {
             @Override
             public void run() {
                 formFrame.setFormContents(formContentsAsQueryString);
@@ -169,7 +198,7 @@ public class FormRunner {
 
     public void showForm() {
         ensureFormFrameExists();
-        QApplication.invokeAndWait(new Runnable() {
+        qtExec(new Runnable() {
             @Override
             public void run() {
                 formFrame.show();
@@ -178,7 +207,7 @@ public class FormRunner {
     }
 
     public void hideForm() {
-        QApplication.invokeAndWait(new Runnable() {
+        qtExec(new Runnable() {
             @Override
             public void run() {
                 if (null != formFrame) {
@@ -189,7 +218,7 @@ public class FormRunner {
     }
 
     public void closeForm() {
-        QApplication.invokeAndWait(new Runnable() {
+        qtExec(new Runnable() {
             @Override
             public void run() {
                 if (null != formFrame) {
@@ -202,7 +231,7 @@ public class FormRunner {
 
     public void setFormBounds(final Rectangle formBounds) {
         ensureFormFrameExists();
-        QApplication.invokeAndWait(new Runnable() {
+        qtExec(new Runnable() {
             @Override
             public void run() {
                 if (null != formBounds) {
