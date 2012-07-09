@@ -21,7 +21,7 @@ public class FormFrameTestApp {
     private final FormFrame formFrame;
 
     public FormFrameTestApp(String[] args) {
-        formFrame = new FormFrame(FORM1_URL, null);
+        formFrame = new FormFrame();
         formFrame.setFormDoneCallback(new Runnable() {
             @Override
             public void run() {

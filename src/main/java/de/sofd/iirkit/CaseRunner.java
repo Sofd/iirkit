@@ -119,7 +119,7 @@ public class CaseRunner implements BRContext {
                 brHandler.initializeFormFrame(formRunner.getFormFrame(), CaseRunner.this);
             }
         });
-        formRunner.start(c.getHangingProtocol().getEcrfUrl(), brHandler.getFormFrameBounds(this), isShowPreviousResult() ? c.getResult() : null);
+        formRunner.openForm(c.getHangingProtocol().getEcrfUrl(), brHandler.getFormFrameBounds(this), isShowPreviousResult() ? c.getResult() : null);
         formRunner.addFormDoneListener(formDoneListener);
     }
 
@@ -183,7 +183,7 @@ public class CaseRunner implements BRContext {
             frame.getFrame().dispose();
         }
         frames.clear();
-        formRunner.disposeFrame();
+        formRunner.closeForm();
     }
 
     //eventually there may be multiple kinds of finishings (e.g. ended, cancelled...)

@@ -30,6 +30,9 @@ import org.apache.log4j.Logger;
  *
  * Not thread-safe; must be run in the Qt thread exclusively.
  *
+ * Normally only {@link FormRunner} uses this directly; use FormRunner
+ * for displaying forms from a Swing context.
+ *
  * @author olaf
  */
  public class FormFrame extends QMainWindow {
@@ -48,11 +51,11 @@ import org.apache.log4j.Logger;
     private final QEventLoop waitForLoadEventLoop = new QEventLoop();
     private Exception loadError = null;
 
-    public FormFrame(String url, String initialFormContent) {
-        this(null, url, initialFormContent);
+    public FormFrame() {
+        this(null);
     }
 
-    public FormFrame(QWidget parent, final String url, String initialFormContent) {
+    public FormFrame(QWidget parent) {
         super(parent);
         this.initialFormContent = initialFormContent;
 
@@ -85,8 +88,6 @@ import org.apache.log4j.Logger;
         backward.triggered.connect(webView, "back()");
         reload.triggered.connect(webView, "reload()");
         stop.triggered.connect(webView, "stop()");
-
-        setUrl(url);
     }
 
     private class EcrfSubmitHandlingWebPage extends QWebPage {

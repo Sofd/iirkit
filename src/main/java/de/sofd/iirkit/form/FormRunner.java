@@ -1,5 +1,6 @@
 package de.sofd.iirkit.form;
 
+import com.google.common.collect.Multimap;
 import com.trolltech.qt.core.QCoreApplication;
 import com.trolltech.qt.gui.QApplication;
 import de.sofd.iirkit.App;
@@ -11,8 +12,17 @@ import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
+ * FormRunner. Manages a single form window, displaying an HTML (form) page and
+ * handling form submits etc.
+ * <p>
+ * Runs a Qt event thread internally, and in it a {@link FormFrame}. FormRunner
+ * itself is meant to be used from the swing event thread only; it essentially
+ * exposes the FormFrame's (Qt-based) functionality to the Swing thread
+ * synchronously, and isolates the caller from all the synchronization/MT issues
+ * involved.
+ * <p>
  * Usage: Create a FormRunner, register an event listener that is called when
- * the runner is finished, call FormRunner#start(formUrl).
+ * the runner is finished, call FormRunner#openForm(url)
  * <p>
  * The runner normally finishes when the user has submitted the form, or has
  * canceled the runner (normally by closing the form window without submitting
@@ -31,7 +41,6 @@ public class FormRunner {
 
     static final Logger logger = Logger.getLogger(FormRunner.class);
 
-    private boolean isRunning = false;
     private final List<FormDoneListener> finishedListeners = new ArrayList<FormDoneListener>();
     private Runnable formShownCallback;
     private FormFrame formFrame;
@@ -69,41 +78,52 @@ public class FormRunner {
         }
     }
 
-    public void start(final String url) {
-        start(url, null, null);
+    public void openForm(final String url) {
+        openForm(url, null, null);
     }
 
-    public void start(final String url, Rectangle formBounds) {
-        start(url, formBounds, null);
+    public void openForm(final String url, Rectangle formBounds) {
+        openForm(url, formBounds, null);
     }
 
-    public void start(final String url, final Rectangle formBounds, final String formContents) {
-        if (isRunning) {
-            throw new IllegalStateException("FormRunner already running");
-        }
-        QApplication.invokeLater(new Runnable() {
+    /**
+     * Open a new form page, optionally with form contents and boundaries.
+     * Opens the form frame if it isn't being shown already.
+     *
+     * @param url
+     * @param formBounds
+     * @param formContents
+     */
+    public void openForm(final String url, final Rectangle formBounds, final String formContentsAsQueryString) {
+        ensureFormFrameExists();
+        QApplication.invokeAndWait(new Runnable() {
             @Override
             public void run() {
-                formFrame = new FormFrame(url, formContents);
-                formFrame.setFormDoneCallback(new Runnable() {
-                    @Override
-                    public void run() {
-                        final FormDoneEvent formDoneEvent = formFrame.getFormDoneEvent();
-                        formFrame.setFormDoneCallback(null);
-                        try {
-                            SwingUtilities.invokeAndWait(new Runnable() {
-
-                                @Override
-                                public void run() {
-                                    stop();
-                                    fireFinished(formDoneEvent);
-                                }
-                            });
-                        } catch (Exception ex) {
-                            throw new RuntimeException("qt invocation failed: " + ex.getLocalizedMessage(), ex);
-                        }
+//                formFrame.setFormDoneCallback(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        final FormDoneEvent formDoneEvent = formFrame.getFormDoneEvent();
+//                        formFrame.setFormDoneCallback(null);
+//                        try {
+//                            SwingUtilities.invokeAndWait(new Runnable() {
+//
+//                                @Override
+//                                public void run() {
+//                                    stop();
+//                                    fireFinished(formDoneEvent);
+//                                }
+//                            });
+//                        } catch (Exception ex) {
+//                            throw new RuntimeException("qt invocation failed: " + ex.getLocalizedMessage(), ex);
+//                        }
+//                    }
+//                });
+                if (null != url) {
+                    formFrame.setUrl(url);
+                    if (null != formContentsAsQueryString) {
+                        formFrame.setFormContents(formContentsAsQueryString);
                     }
-                });
+                }
                 formFrame.show();
                 if (null != formBounds) {
                     formFrame.setGeometry(formBounds.x, formBounds.y, formBounds.width, formBounds.height);
@@ -113,8 +133,83 @@ public class FormRunner {
                 }
             }
         });
+    }
 
-        isRunning = true;
+    protected void ensureFormFrameExists() {
+        QApplication.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                if (null == formFrame) {
+                    formFrame = new FormFrame();
+                }
+            }
+        });
+    }
+
+    public void setFormContents(final Multimap<String, String> params) {
+        ensureFormFrameExists();
+        QApplication.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                formFrame.setFormContents(params);
+            }
+        });
+    }
+
+    public void setFormContents(final String formContentsAsQueryString) {
+        ensureFormFrameExists();
+        QApplication.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                formFrame.setFormContents(formContentsAsQueryString);
+            }
+        });
+
+    }
+
+    public void showForm() {
+        ensureFormFrameExists();
+        QApplication.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                formFrame.show();
+            }
+        });
+    }
+
+    public void hideForm() {
+        QApplication.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                if (null != formFrame) {
+                    formFrame.hide();
+                }
+            }
+        });
+    }
+
+    public void closeForm() {
+        QApplication.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                if (null != formFrame) {
+                    formFrame.close();
+                    formFrame = null;
+                }
+            }
+        });
+    }
+
+    public void setFormBounds(final Rectangle formBounds) {
+        ensureFormFrameExists();
+        QApplication.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+                if (null != formBounds) {
+                    formFrame.setGeometry(formBounds.x, formBounds.y, formBounds.width, formBounds.height);
+                }
+            }
+        });
     }
 
     public FormFrame getFormFrame() {
@@ -154,21 +249,11 @@ public class FormRunner {
 
     public void runJavascriptInFormAsync(final String jsCode) {
         //TODO: synchronize with form loading
+        ensureFormFrameExists();
         QApplication.invokeLater(new Runnable() {
             @Override
             public void run() {
                 formFrame.runJavascriptInForm(jsCode);
-            }
-        });
-    }
-
-    public void disposeFrame() {
-        QApplication.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (null != formFrame) {
-                    formFrame.close();
-                }
             }
         });
     }
@@ -192,7 +277,6 @@ public class FormRunner {
             }
         });
         //formFrame.dispose();
-        isRunning = false;
         //TODO: fireFinished() unless our caller already did
     }
 
