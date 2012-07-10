@@ -22,10 +22,26 @@ public class FormFrameTestApp {
 
     public FormFrameTestApp(String[] args) {
         formFrame = new FormFrame();
-        formFrame.setFormDoneCallback(new Runnable() {
+        formFrame.addFormListener(new FormListener() {
             @Override
-            public void run() {
-                logger.info("FORM DONE CALLBACK. isFormSubmitted: " + formFrame.getFormDoneEvent().isFormSubmitted());
+            public void formOpened(FormEvent event) {
+                logger.info("Event received: " + event);
+            }
+            @Override
+            public void formClosed(FormEvent event) {
+                logger.info("Event received: " + event);
+            }
+            @Override
+            public void formShown(FormEvent event) {
+                logger.info("Event received: " + event);
+            }
+            @Override
+            public void formHidden(FormEvent event) {
+                logger.info("Event received: " + event);
+            }
+            @Override
+            public void formSubmitted(FormEvent event) {
+                logger.info("Event received: " + event);
             }
         });
         formFrame.show();
@@ -42,6 +58,7 @@ public class FormFrameTestApp {
         toolbar.addAction("fill2").triggered.connect(this, "fill2()");
         toolbar.addAction("formfill1").triggered.connect(this, "formfill1()");
         toolbar.addAction("formfill2").triggered.connect(this, "formfill2()");
+        toolbar.addAction("bugtest").triggered.connect(this, "bugtest()");
         toolbar.addAction("clear").triggered.connect(this, "clear()");
         toolbar.addAction("exit").triggered.connect(this, "exit()");
         controllerFrame.show();
@@ -92,6 +109,16 @@ public class FormFrameTestApp {
     private void clear() {
         Multimap<String, String> params = ArrayListMultimap.create();
         formFrame.setFormContents(params);
+    }
+
+    private void bugtest() {
+        //s.a. doc/todo.txt
+        //
+        formFrame.close();
+        formFrame.show();
+        form1();
+        //fill1 (interactively) will err after this (see doc/todo.txt)
+        // can also be reproduced interactively: start app, close form, show, form1, fill1
     }
 
     private void exit() {

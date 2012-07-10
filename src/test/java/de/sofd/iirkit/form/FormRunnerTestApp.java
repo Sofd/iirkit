@@ -12,7 +12,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author olaf
+ * @author Olaf Klischat
  */
 public class FormRunnerTestApp {
 
@@ -117,16 +117,26 @@ public class FormRunnerTestApp {
         f.pack();
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setVisible(true);
-        fr.addFormDoneListener(new FormDoneListener() {
-
+        fr.addFormListener(new FormListener() {
             @Override
-            public void formSubmitted(FormDoneEvent event) {
-                logger.info("formSubmitted event: " + event);
+            public void formOpened(FormEvent event) {
+                logger.info("Event received: " + event);
             }
-
             @Override
-            public void formCancelled(FormDoneEvent event) {
-                logger.info("formCancelled event: " + event);
+            public void formClosed(FormEvent event) {
+                logger.info("Event received: " + event);
+            }
+            @Override
+            public void formShown(FormEvent event) {
+                logger.info("Event received: " + event);
+            }
+            @Override
+            public void formHidden(FormEvent event) {
+                logger.info("Event received: " + event);
+            }
+            @Override
+            public void formSubmitted(FormEvent event) {
+                logger.info("Event received: " + event);
             }
         });
     }

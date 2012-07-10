@@ -1,8 +1,9 @@
 package de.sofd.iirkit;
 
 import com.google.common.collect.Multimap;
-import de.sofd.iirkit.form.FormDoneEvent;
-import de.sofd.iirkit.form.FormDoneListener;
+import de.sofd.iirkit.form.FormAdapter;
+import de.sofd.iirkit.form.FormEvent;
+import de.sofd.iirkit.form.FormListener;
 import de.sofd.iirkit.form.FormRunner;
 import de.sofd.iirkit.service.Case;
 import de.sofd.iirkit.service.HangingProtocol;
@@ -113,20 +114,20 @@ public class CaseRunner implements BRContext {
     }
 
     protected void initializeFormFrameFor(Case c) {
-        formRunner.setFormShownCallback(new Runnable() {
+        formRunner.addFormListener(new FormAdapter() {
             @Override
-            public void run() {
+            public void formOpened(FormEvent event) {
                 brHandler.initializeFormFrame(formRunner.getFormFrame(), CaseRunner.this);
             }
         });
         formRunner.openForm(c.getHangingProtocol().getEcrfUrl(), brHandler.getFormFrameBounds(this), isShowPreviousResult() ? c.getResult() : null);
-        formRunner.addFormDoneListener(formDoneListener);
+        formRunner.addFormListener(formDoneListener);
     }
 
-    private FormDoneListener formDoneListener = new FormDoneListener() {
+    private FormListener formDoneListener = new FormAdapter() {
         @Override
-        public void formSubmitted(FormDoneEvent event) {
-            formRunner.removeFormDoneListener(this);
+        public void formSubmitted(FormEvent event) {
+            formRunner.removeFormListener(this);
             if (!isReadOnly()) {
                 currentCase.setResult(event.getFormResult());
             }
@@ -135,8 +136,8 @@ public class CaseRunner implements BRContext {
             fireCaseFinished(event.getFormResultMap());
         }
         @Override
-        public void formCancelled(FormDoneEvent event) {
-            formRunner.removeFormDoneListener(this);
+        public void formClosed(FormEvent event) {
+            formRunner.removeFormListener(this);
             caseRunning = false;
             fireCaseCancelled();
         }
@@ -171,8 +172,8 @@ public class CaseRunner implements BRContext {
         if (!caseRunning) {
             throw new IllegalStateException("no case is running");
         }
-        formRunner.cancel();
-        formRunner.removeFormDoneListener(formDoneListener); //will normally have been done by the formDoneListener itself already during cancel()
+        formRunner.closeForm();
+        formRunner.removeFormListener(formDoneListener); //will normally have been done by the formDoneListener itself already during cancel()
     }
 
     public void disposeFrames() {

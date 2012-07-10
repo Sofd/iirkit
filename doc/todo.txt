@@ -4,6 +4,9 @@
   wird offenbar neu initialisiert, und jquery/formutils.js wurden
   nicht geladen)
 
+- BUG: FormRunner: start FormRunnerTestApp, show(), close
+  interactively, form1 => hangs
+
 - Reread: Integration mit User-Liste (admin-User muss bestätigen o.ä.)
 
 - Kommandozeilenparameter: automatisches Einloggen & Case-Auswahl

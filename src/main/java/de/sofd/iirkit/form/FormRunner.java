@@ -4,12 +4,11 @@ import com.google.common.collect.Multimap;
 import com.trolltech.qt.core.QCoreApplication;
 import com.trolltech.qt.gui.QApplication;
 import de.sofd.iirkit.App;
+import de.sofd.util.IdentityHashSet;
 import java.awt.Rectangle;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
-import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
@@ -37,17 +36,16 @@ import org.apache.log4j.Logger;
  * FormRunner is NOT thread-safe by itself: It must be called from the Swing
  * thread only.
  *
- * @author olaf
+ * @author Olaf Klischat
  */
 public class FormRunner {
 
     static final Logger logger = Logger.getLogger(FormRunner.class);
 
-    private final List<FormDoneListener> finishedListeners = new ArrayList<FormDoneListener>();
-    private Runnable formShownCallback;
     private FormFrame formFrame;
     private final App app;
     private boolean isInQtExec = false;
+    private final Collection<FormListener> formListeners = new IdentityHashSet<FormListener>();
 
     private static final CountDownLatch qtInitializedSignal = new CountDownLatch(1);
 
@@ -84,6 +82,7 @@ public class FormRunner {
             //if we're in a qtExec(),
             // calling SwingUtilities.invokeAndWait would lead to a deadlock
             // (we assume that swingExec is called from the Qt thread)
+            //TODO: invokeLater() means that the job may run very late/asynchronous
             SwingUtilities.invokeLater(r);
         } else {
             try {
@@ -129,24 +128,6 @@ public class FormRunner {
         qtExec(new Runnable() {
             @Override
             public void run() {
-                formFrame.setFormDoneCallback(new Runnable() {
-                    @Override
-                    public void run() {
-                        final FormDoneEvent formDoneEvent = formFrame.getFormDoneEvent();
-                        formFrame.setFormDoneCallback(null);
-                        try {
-                            swingExec(new Runnable() {
-                                @Override
-                                public void run() {
-                                    stop();
-                                    fireFinished(formDoneEvent);
-                                }
-                            });
-                        } catch (Exception ex) {
-                            throw new RuntimeException("qt invocation failed: " + ex.getLocalizedMessage(), ex);
-                        }
-                    }
-                });
                 if (null != url) {
                     formFrame.setUrl(url);
                     if (null != formContentsAsQueryString) {
@@ -157,9 +138,6 @@ public class FormRunner {
                 if (null != formBounds) {
                     formFrame.setGeometry(formBounds.x, formBounds.y, formBounds.width, formBounds.height);
                 }
-                if (formShownCallback != null) {
-                    formShownCallback.run();
-                }
             }
         });
     }
@@ -169,7 +147,19 @@ public class FormRunner {
             @Override
             public void run() {
                 if (null == formFrame) {
-                    formFrame = new FormFrame();
+                    formFrame = new FormFrame() {
+                        @Override
+                        protected void fireFormEvent(final FormEvent evt) {
+                            super.fireFormEvent(evt);
+                            swingExec(new Runnable() {
+                                @Override
+                                public void run() {
+                                    FormRunner.this.fireFormEvent(evt);
+                                }
+                            });
+                        }
+                    };
+                    formFrame.show();
                 }
             }
         });
@@ -245,35 +235,39 @@ public class FormRunner {
         return formFrame;
     }
 
-    public void addFormDoneListener(FormDoneListener l) {
-        finishedListeners.add(l);
+    public void addFormListener(FormListener l) {
+        formListeners.add(l);
     }
 
-    public void removeFormDoneListener(FormDoneListener l) {
-        finishedListeners.remove(l);
+    public void removeFormListener(FormListener l) {
+        formListeners.remove(l);
     }
 
-    protected void fireFinished(FormDoneEvent evt) {
-        for (FormDoneListener l : finishedListeners.toArray(new FormDoneListener[0])) {
-            if (evt.isFormSubmitted()) {
+    protected void fireFormEvent(FormEvent evt) {
+        for (FormListener l : formListeners) {
+            switch (evt.getType()) {
+
+            case FORM_OPENED:
+                l.formOpened(evt);
+                break;
+
+            case FORM_CLOSED:
+                l.formClosed(evt);
+                break;
+
+            case FORM_SHOWN:
+                l.formShown(evt);
+                break;
+
+            case FORM_HIDDEN:
+                l.formHidden(evt);
+                break;
+
+            case FORM_SUBMITTED:
                 l.formSubmitted(evt);
-            } else {
-                l.formCancelled(evt);
+                break;
             }
         }
-    }
-
-    public Runnable getFormShownCallback() {
-        return formShownCallback;
-    }
-
-    /**
-     * Callback to run when the form frame was just shown. RUNS IN THE QT THREAD.
-     *
-     * @param formShownCallback
-     */
-    public void setFormShownCallback(Runnable formShownCallback) {
-        this.formShownCallback = formShownCallback;
     }
 
     public void runJavascriptInFormAsync(final String jsCode) {
@@ -285,28 +279,6 @@ public class FormRunner {
                 formFrame.runJavascriptInForm(jsCode);
             }
         });
-    }
-
-    public void cancel() {
-        fireFinished(new FormDoneEvent());
-        stop();
-    }
-
-    protected void stop() {
-        //QApplication.invokeAndWait would probably lead to a deadlock when stop()
-        //is called from a Swing.invokeAndWait(). Might invokeLater() in theory
-        //cause a race condition?
-        QApplication.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (null != formFrame) {
-                    logger.debug("async formFrame.close() as a result of a FormRunner#stop...");
-                    formFrame.close();  //TODO: use hide() instead
-                }
-            }
-        });
-        //formFrame.dispose();
-        //TODO: fireFinished() unless our caller already did
     }
 
     /**
