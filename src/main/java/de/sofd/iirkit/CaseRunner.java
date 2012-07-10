@@ -21,7 +21,7 @@ import org.apache.log4j.Logger;
  * (but doesn't update the database), and notifies all the registered
  * caseFinishedListeners.
  *
- * @author olaf
+ * @author Olaf Klischat
  */
 public class CaseRunner implements BRContext {
 
@@ -208,7 +208,7 @@ public class CaseRunner implements BRContext {
 
     protected void fireCaseCancelled() {
         for (CaseDoneListener l : caseDoneListeners.toArray(new CaseDoneListener[0])) {
-            l.caseFinished(new CaseDoneEvent(this, null));
+            l.caseCancelled(new CaseDoneEvent(this, null));
         }
     }
 

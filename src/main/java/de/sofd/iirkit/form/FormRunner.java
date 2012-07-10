@@ -1,5 +1,6 @@
 package de.sofd.iirkit.form;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.trolltech.qt.core.QCoreApplication;
 import com.trolltech.qt.gui.QApplication;
@@ -8,6 +9,7 @@ import de.sofd.util.IdentityHashSet;
 import java.awt.Rectangle;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -44,7 +46,7 @@ public class FormRunner {
 
     private FormFrame formFrame;
     private final App app;
-    private boolean isInQtExec = false;
+    private boolean isInQtExec = false, isInSwingExec = false;
     private final Collection<FormListener> formListeners = new IdentityHashSet<FormListener>();
 
     private static final CountDownLatch qtInitializedSignal = new CountDownLatch(1);
@@ -62,18 +64,27 @@ public class FormRunner {
             QApplication.setQuitOnLastWindowClosed(false);
             qtInitializedSignal.countDown();
             QApplication.exec();
-            System.err.println("QT thread finished.");
+            logger.debug("QT thread finished.");
         }
 
     };
 
     protected void qtExec(Runnable r) {
-        boolean wasInQtExec = isInQtExec;
-        isInQtExec = true;
-        try {
-            QApplication.invokeAndWait(r);
-        } finally {
-            isInQtExec = wasInQtExec;
+        if (isInSwingExec) {
+            //if we're in a swingExec(),
+            // calling QApplication.invokeAndWait would lead to a deadlock
+            // (we assume that qtExec is called from the Swing thread)
+            //TODO: invokeLater() means that the job may run very late/asynchronous
+            logger.debug("must run Qt job asynchronously b/c we're in a Swing invokeAndWait");
+            QApplication.invokeLater(r);
+        } else {
+            boolean wasInQtExec = isInQtExec;
+            isInQtExec = true;
+            try {
+                QApplication.invokeAndWait(r);
+            } finally {
+                isInQtExec = wasInQtExec;
+            }
         }
     }
 
@@ -83,14 +94,19 @@ public class FormRunner {
             // calling SwingUtilities.invokeAndWait would lead to a deadlock
             // (we assume that swingExec is called from the Qt thread)
             //TODO: invokeLater() means that the job may run very late/asynchronous
+            logger.debug("must run Swing job asynchronously b/c we're in a Qt invokeAndWait");
             SwingUtilities.invokeLater(r);
         } else {
+            boolean wasInSwingExec = isInSwingExec;
+            isInSwingExec = true;
             try {
                 SwingUtilities.invokeAndWait(r);
             } catch (InterruptedException ex) {
                 throw new RuntimeException("swing invokeAndWait interrupted.", ex);
             } catch (InvocationTargetException ex) {
                 throw new RuntimeException("swing invokeAndWait exception", ex.getCause());
+            } finally {
+                isInSwingExec = wasInSwingExec;
             }
         }
     }
@@ -243,7 +259,7 @@ public class FormRunner {
     }
 
     protected void fireFormEvent(FormEvent evt) {
-        for (FormListener l : formListeners) {
+        for (FormListener l : Lists.newArrayList(formListeners)) {
             switch (evt.getType()) {
 
             case FORM_OPENED:

@@ -16,12 +16,6 @@ public class FormEvent {
     private final Multimap<String, String> requestParams;
     private String formResult;
 
-//    public FormEvent() {
-//        type = Type.FORM_SUBMITTED;
-//        submitUrl = null;
-//        requestParams = null;
-//    }
-
     public FormEvent(Type type) {
         if (type == Type.FORM_SUBMITTED) {
             throw new IllegalArgumentException("FORM_SUBMITTED event must have submitUrl / requestParams");
