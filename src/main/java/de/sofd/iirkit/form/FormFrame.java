@@ -231,8 +231,6 @@ import org.apache.log4j.Logger;
 
     @Override
     protected void closeEvent(QCloseEvent event) {
-        webView.loadProgress.disconnect(this);
-        webView.loadFinished.disconnect(this);
         fireFormEvent(new FormEvent(FormEvent.Type.FORM_CLOSED));
     }
 
