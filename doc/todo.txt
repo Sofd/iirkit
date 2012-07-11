@@ -1,9 +1,3 @@
-- BUG: FormFrame: nach close(); show(); setUrl(); funktioniert
-  setFormContents() nicht mehr ("JS message: undefined:1:
-  ReferenceError: Can't find variable: __fillForm" -- d.h. die JS-VM
-  wird offenbar neu initialisiert, und jquery/formutils.js wurden
-  nicht geladen)
-
 - Reread: Integration mit User-Liste (admin-User muss bestätigen o.ä.)
 
 - Kommandozeilenparameter: automatisches Einloggen & Case-Auswahl
