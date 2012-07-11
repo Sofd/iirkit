@@ -1,6 +1,7 @@
 package de.sofd.iirkit.form;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import com.trolltech.qt.QPair;
@@ -243,7 +244,7 @@ import org.apache.log4j.Logger;
     }
 
     protected void fireFormEvent(FormEvent evt) {
-        for (FormListener l : formListeners) {
+        for (FormListener l : Lists.newArrayList(formListeners)) {
             switch (evt.getType()) {
 
             case FORM_OPENED:
