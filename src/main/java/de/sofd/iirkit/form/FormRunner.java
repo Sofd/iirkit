@@ -9,7 +9,6 @@ import de.sofd.util.IdentityHashSet;
 import java.awt.Rectangle;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -24,19 +23,14 @@ import org.apache.log4j.Logger;
  * synchronously, and isolates the caller from all the synchronization/MT issues
  * involved.
  * <p>
- * Usage: Create a FormRunner, register an event listener that is called when
- * the runner is finished, call FormRunner#openForm(url)
- * <p>
- * The runner normally finishes when the user has submitted the form, or has
- * canceled the runner (normally by closing the form window without submitting
- * the form). The runner may also be finished externally by calling #stop().
- * <p>
- * This runner also provides isolation from the QT thread that runs internally
- * for displaying the (QT-based) form UIs. To the outside, FormRunner executes
- * in the Swing thread exclusively (this includes event handlers called by
- * FormRunner). (Exception: {@link #setFormShownCallback(java.lang.Runnable) })
- * FormRunner is NOT thread-safe by itself: It must be called from the Swing
- * thread only.
+ * Usage: Create a FormRunner, register a {@link FormListener} to be informed
+ * about any state changes, call any of FormRunner#openForm to display the form
+ * and load a URL, and optionally fill the form. You may also fill the form
+ * later using {@link #setFormContents(com.google.common.collect.Multimap) },
+ * or call #openForm again to load a different form. {@link #hideForm()} hides
+ * the form without losing its state; it can be re-shown using {@link #showForm()}
+ * at any time. When the user closes the form interactively, this has the same
+ * effect as calling hide().
  *
  * @author Olaf Klischat
  */
