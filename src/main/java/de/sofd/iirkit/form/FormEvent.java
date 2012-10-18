@@ -9,12 +9,13 @@ import com.google.common.collect.Multimaps;
  */
 public class FormEvent {
 
-    public static enum Type {FORM_SUBMITTED, FORM_OPENED, FORM_CLOSED, FORM_SHOWN, FORM_HIDDEN};
+    public static enum Type {FORM_SUBMITTED, FORM_OPENED, FORM_DELETED, FORM_SHOWN, FORM_HIDDEN};
 
     private final Type type;
     private final String submitUrl;
     private final Multimap<String, String> requestParams;
     private String formResult;
+    //TODO: isInteractive flag (tells whether the event was initiated by the end user, rather than programmatically)
 
     public FormEvent(Type type) {
         if (type == Type.FORM_SUBMITTED) {

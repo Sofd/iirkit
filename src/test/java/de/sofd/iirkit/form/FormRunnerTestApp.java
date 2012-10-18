@@ -101,10 +101,10 @@ public class FormRunnerTestApp {
                 fr.setFormContents(params);
             }
         });
-        toolbar.add(new AbstractAction("close") {
+        toolbar.add(new AbstractAction("delete") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                fr.closeForm();
+                fr.deleteForm();
             }
         });
         toolbar.add(new AbstractAction("exit") {
@@ -123,7 +123,7 @@ public class FormRunnerTestApp {
                 logger.info("Event received: " + event);
             }
             @Override
-            public void formClosed(FormEvent event) {
+            public void formDeleted(FormEvent event) {
                 logger.info("Event received: " + event);
             }
             @Override

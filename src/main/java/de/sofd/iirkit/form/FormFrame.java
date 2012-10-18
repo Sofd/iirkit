@@ -232,7 +232,7 @@ import org.apache.log4j.Logger;
 
     @Override
     protected void closeEvent(QCloseEvent event) {
-        fireFormEvent(new FormEvent(FormEvent.Type.FORM_CLOSED));
+        //fireFormEvent(new FormEvent(FormEvent.Type.FORM_HIDDEN));
     }
 
     public void addFormListener(FormListener l) {
@@ -251,8 +251,8 @@ import org.apache.log4j.Logger;
                 l.formOpened(evt);
                 break;
 
-            case FORM_CLOSED:
-                l.formClosed(evt);
+            case FORM_DELETED:
+                l.formDeleted(evt);
                 break;
 
             case FORM_SHOWN:

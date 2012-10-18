@@ -10,7 +10,7 @@ public interface FormListener {
 
     void formOpened(FormEvent event);
 
-    void formClosed(FormEvent event);
+    void formDeleted(FormEvent event);
 
     void formShown(FormEvent event);
 

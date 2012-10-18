@@ -3,6 +3,7 @@ package de.sofd.iirkit.form;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.trolltech.qt.core.QCoreApplication;
+import com.trolltech.qt.core.Qt.WidgetAttribute;
 import com.trolltech.qt.gui.QApplication;
 import de.sofd.iirkit.App;
 import de.sofd.util.IdentityHashSet;
@@ -169,6 +170,7 @@ public class FormRunner {
                             });
                         }
                     };
+                    formFrame.setAttribute(WidgetAttribute.WA_DeleteOnClose, false);  //this is the default, but make it explicit that we need this
                 }
             }
         });
@@ -216,16 +218,20 @@ public class FormRunner {
         });
     }
 
-    public void closeForm() {
+    public void deleteForm() {
         qtExec(new Runnable() {
             @Override
             public void run() {
                 if (null != formFrame) {
                     formFrame.close();
+                    //TODO: delete the widget to free up its resources -- how?
+                    //  (equivalent to "delete widget;" in C++ (where the d'tor would do the work))
+                    //  (destroy() is protected)
                     formFrame = null;
                 }
             }
         });
+        fireFormEvent(new FormEvent(FormEvent.Type.FORM_DELETED));
     }
 
     public void setFormBounds(final Rectangle formBounds) {
@@ -260,8 +266,8 @@ public class FormRunner {
                 l.formOpened(evt);
                 break;
 
-            case FORM_CLOSED:
-                l.formClosed(evt);
+            case FORM_DELETED:
+                l.formDeleted(evt);
                 break;
 
             case FORM_SHOWN:

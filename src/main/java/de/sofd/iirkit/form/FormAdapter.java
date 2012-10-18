@@ -7,7 +7,7 @@ package de.sofd.iirkit.form;
 public class FormAdapter implements FormListener {
 
     @Override
-    public void formClosed(FormEvent event) {
+    public void formDeleted(FormEvent event) {
     }
 
     @Override

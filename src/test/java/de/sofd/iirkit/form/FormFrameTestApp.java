@@ -28,7 +28,7 @@ public class FormFrameTestApp {
                 logger.info("Event received: " + event);
             }
             @Override
-            public void formClosed(FormEvent event) {
+            public void formDeleted(FormEvent event) {
                 logger.info("Event received: " + event);
             }
             @Override
