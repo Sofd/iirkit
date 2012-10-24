@@ -87,7 +87,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
                         okButton.setEnabled(nRemainingCases > 0 && selectedUser.equals(securityContext.getUser()));
                         //clearButton.setEnabled(false);
                         logButton.setEnabled(true);
-                        auditButton.setEnabled(true);
+                        auditButton.setEnabled(/*nDoneCases > 0 && */securityContext.getUser().hasRole(User.ROLE_ADMIN));
                     } else {
                         okButton.setEnabled(false);
                         //clearButton.setEnabled(false);
@@ -159,7 +159,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
     @Action
     public void auditAction() {
         User u = (User) sessionList.getSelectedValue();
-        if (u != null) {
+        if (u != null && iirService.getNumberOfCasesOf(u) > 0) {
             new AuditSessionRunner(u).runSession();
         } else {
             Toolkit.getDefaultToolkit().beep();
@@ -167,10 +167,9 @@ public class SessionControlDialog extends javax.swing.JDialog {
     }
 
     protected class AuditSessionRunner {
-        //TODO: ugly code in here. Model this thing as a state machine.
         private final User user;
         private CaseSelectionDialog csdiag;
-        private CaseListener caseDoneListener;
+        private CaseListener caseListener;
 
         public AuditSessionRunner(User user) {
             this.user = user;
@@ -184,51 +183,39 @@ public class SessionControlDialog extends javax.swing.JDialog {
                 public void propertyChange(PropertyChangeEvent evt) {
                     Case c = (Case) evt.getNewValue();
                     if (null != c) {
-                        if (null != caseDoneListener) {
-                            caseRunner.removeCaseListener(caseDoneListener);
-                        }
-                        if (caseRunner.isCaseRunning()) {
-                            caseRunner.closeCase();
-                        }
-                        startFromCase(c);
+                        caseRunner.openCase(c, true, true);
+                    }
+                }
+            });
+            caseRunner.addCaseListener(caseListener = new CaseAdapter() {
+                @Override
+                public void caseSubmitted(CaseEvent e) {
+                    Case nextCase  = iirService.getCaseOf(user,  caseRunner.getCurrentCase().getNumber() + 1);
+                    if (nextCase != null) {
+                        caseRunner.openCase(nextCase, true, true);
+                    } else {
+                        exitSession();
                     }
                 }
             });
             csdiag.addClosedListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
-                    //caseRunner.disposeFrames();
-                    SessionControlDialog.this.setVisible(true);
+                    exitSession();
                 }
             });
             csdiag.setVisible(true);
+            //TODO: sync csdiag's case list selection
+            caseRunner.openCase(iirService.getCaseOf(user, 1), true, true);
         }
 
-        private void startFromCase(final Case c) {
-            logger.info("auditing case: " + c);
-            if (null != caseDoneListener) {
-                caseRunner.removeCaseListener(caseDoneListener);
-            }
-            caseRunner.addCaseListener(caseDoneListener = new CaseAdapter() {
-                @Override
-                public void caseSubmitted(CaseEvent e) {
-                    caseRunner.removeCaseListener(this);
-                    Case nextCase = iirService.getCaseOf(user, c.getNumber() + 1);
-                    if (nextCase != null) {
-                        csdiag.setSelectedCase(nextCase);
-                    } else {
-                        csdiag.close();
-                    }
-                }
-                @Override
-                public void caseClosed(CaseEvent e) {
-                    caseRunner.removeCaseListener(this);
-                    //caseRunner.disposeFrames();
-                    SessionControlDialog.this.setVisible(true);
-                }
-            });
-            caseRunner.openCase(c, true, true);
+        private void exitSession() {
+            caseRunner.closeCase();
+            caseRunner.removeCaseListener(caseListener);
+            csdiag.close();
+            SessionControlDialog.this.setVisible(true);
         }
+
     }
 
     @Action

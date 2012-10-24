@@ -41,6 +41,7 @@ public class CaseSelectionDialog extends javax.swing.JDialog {
     private final IirService iirSvc;
     public final static String PROP_SELECTED_CASE = "selectedCase";
     private final List<ChangeListener> closedListeners = new ArrayList<ChangeListener>();
+    private boolean isClosing = false;
 
     /** Creates new form CaseSelectionDialog */
     public CaseSelectionDialog(java.awt.Frame parent, User user, IirService iirSvc) {
@@ -184,8 +185,16 @@ public class CaseSelectionDialog extends javax.swing.JDialog {
 
     @Action
     public void close() {
-        setVisible(false);
-        fireClosed();
+        if (isClosing) {
+            return;
+        }
+        isClosing = true;
+        try {
+            setVisible(false);
+            fireClosed();
+        } finally {
+            isClosing = false;
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
