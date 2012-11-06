@@ -1,0 +1,30 @@
+dependencies {
+    compile project(':viskit')
+    //compile "com.google.guava:guava:13.0.1"
+    compile "rhino:js:1.7R2"
+    compile "org.hsqldb:hsqldb:2.0.0"
+    compile "org.springframework:spring-core:$useSpringVersion"
+    compile "org.springframework:spring-beans:$useSpringVersion"
+    compile "org.springframework:spring-expression:$useSpringVersion"
+    compile "org.springframework:spring-context:$useSpringVersion"
+    compile "org.springframework:spring-aop:$useSpringVersion"
+    compile "org.springframework:spring-aspects:$useSpringVersion"
+    compile "org.springframework:spring-tx:$useSpringVersion"
+    compile "org.springframework:spring-jdbc:$useSpringVersion"
+    compile "log4j:log4j:1.2.13"
+    compile "commons-lang:commons-lang:2.5"
+    compile "com.google.guava:guava:r05"
+    compile "net.java.dev.appframework:appframework:1.03"
+    compile "org.swinglabs:swing-layout:1.0.3"
+    compile "net.java.dev.beansbinding:beansbinding:1.2.1"
+    compile "dcm4che:dcm4che-core:2.0.24"
+    compile "dcm4che:dcm4che-imageio:2.0.24"
+    compile "net.sf.qtjambi:qtjambi-base-linux64:4.6.3.2"
+    compile "net.sf.qtjambi:qtjambi-platform-linux64:4.6.3.2"
+}
+
+apply plugin:'application'
+
+mainClassName = "de.sofd.iirkit.App"
+
+//TODO: img/luts/osx directory required by viskit -- move to classpath
