@@ -6,6 +6,8 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
 import org.apache.log4j.Logger;
 import org.jdesktop.application.SingleFrameApplication;
 import org.springframework.context.ApplicationContext;
@@ -35,32 +37,38 @@ public class App extends SingleFrameApplication {
         //TODO: possibly modify appConfig.baseDirName from some command line parameter
 
         //IirService iirSvc = (IirService) ctx.getBean("iirService");
-        IirService iirSvc = new CsvIirServiceImpl(new File(appConfig.getBaseDir(), "user.csv"), new File(appConfig.getBaseDir(), "case.csv"));
+        try {
+	        IirService iirSvc = new CsvIirServiceImpl(new File(appConfig.getBaseDir(), "user.csv"), new File(appConfig.getBaseDir(), "case.csv"));
+	
+	        //SecurityContext secCtx = (SecurityContext) ctx.getBean("securityContext");
+	        SecurityContext secCtx = new SecurityContext();
+	        secCtx.setIirService(iirSvc);
+	
+	        BRHandler brHandler = (BRHandler) ctx.getBean("brHandler");
+	
+	        secCtx.setSuperadminPassword(brHandler.getSuperadminPassword());
+	
+	        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+	        GraphicsDevice[] gs = ge.getScreenDevices();
+	        int gsIdx = 0;
+	        if (gs.length >= 3) {
+	            gsIdx = 1;
+	        }
+	        JFrame dummyFrame = new JFrame(gs[gsIdx].getDefaultConfiguration());
+	        LoginDialog loginDialog = new LoginDialog(secCtx, dummyFrame, true);
+	        loginDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
+	        loginDialog.setVisible(true);
+	
+	        System.out.println("user=" + secCtx.getUser() + ", authority=" + secCtx.getAuthority());
 
-        //SecurityContext secCtx = (SecurityContext) ctx.getBean("securityContext");
-        SecurityContext secCtx = new SecurityContext();
-        secCtx.setIirService(iirSvc);
-
-        BRHandler brHandler = (BRHandler) ctx.getBean("brHandler");
-
-        secCtx.setSuperadminPassword(brHandler.getSuperadminPassword());
-
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] gs = ge.getScreenDevices();
-        int gsIdx = 0;
-        if (gs.length >= 3) {
-            gsIdx = 1;
+	        SessionControlDialog sessionSelectionDialog = new SessionControlDialog(this, iirSvc, brHandler, secCtx, dummyFrame, false);
+	        sessionSelectionDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
+	        sessionSelectionDialog.setVisible(true);
+        } catch (Exception e) {
+        	JOptionPane.showMessageDialog(null, "Couldn't initialize iirkit: " + e.getLocalizedMessage() +
+        			"\nMake sure you have proper user.csv and case.csv files in the working directory.", "Error reading user/case information", JOptionPane.ERROR_MESSAGE);
+        	System.exit(1);
         }
-        JFrame dummyFrame = new JFrame(gs[gsIdx].getDefaultConfiguration());
-        LoginDialog loginDialog = new LoginDialog(secCtx, dummyFrame, true);
-        loginDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
-        loginDialog.setVisible(true);
-
-        System.out.println("user=" + secCtx.getUser() + ", authority=" + secCtx.getAuthority());
-
-        SessionControlDialog sessionSelectionDialog = new SessionControlDialog(this, iirSvc, brHandler, secCtx, dummyFrame, false);
-        sessionSelectionDialog.setLocation((int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterX() - loginDialog.getWidth(), (int) gs[gsIdx].getDefaultConfiguration().getBounds().getCenterY() - loginDialog.getHeight());
-        sessionSelectionDialog.setVisible(true);
     }
 
     /**

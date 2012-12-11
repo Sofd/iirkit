@@ -26,5 +26,3 @@ dependencies {
 apply plugin:'application'
 
 mainClassName = "de.sofd.iirkit.App"
-
-//TODO: img/luts/osx directory required by viskit -- move to classpath
