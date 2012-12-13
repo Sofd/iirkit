@@ -1,28 +1,79 @@
+def platforms = ['linux32', 'linux64', 'win32', 'win64', 'mac32', 'mac64']
+
+// dependency configuration setup:
+// configuration "compile_base" contains all platform-independent compile-time dependencies.
+// configuration "compile_<platform>" contains all compile-time dependencies for platform <platform>.
+// configuration "compile" contains all compile-time dependencies for the platform we're running on.
+// configuration "runtime_<platform>" contains all runtime dependencies for platform <platform>.
+// configuration "runtime" contains all runtime dependencies for the platform we're running on.
+
+configurations.add 'compile_base'
+
 dependencies {
-    compile project(':viskit')
-    //compile "com.google.guava:guava:13.0.1"
-    compile "rhino:js:1.7R2"
-    compile "org.hsqldb:hsqldb:2.0.0"
-    compile "org.springframework:spring-core:$useSpringVersion"
-    compile "org.springframework:spring-beans:$useSpringVersion"
-    compile "org.springframework:spring-expression:$useSpringVersion"
-    compile "org.springframework:spring-context:$useSpringVersion"
-    compile "org.springframework:spring-aop:$useSpringVersion"
-    compile "org.springframework:spring-aspects:$useSpringVersion"
-    compile "org.springframework:spring-tx:$useSpringVersion"
-    compile "org.springframework:spring-jdbc:$useSpringVersion"
-    compile "log4j:log4j:1.2.13"
-    compile "commons-lang:commons-lang:2.5"
-    compile "com.google.guava:guava:r05"
-    compile "net.java.dev.appframework:appframework:1.03"
-    compile "org.swinglabs:swing-layout:1.0.3"
-    compile "net.java.dev.beansbinding:beansbinding:1.2.1"
-    compile "dcm4che:dcm4che-core:2.0.24"
-    compile "dcm4che:dcm4che-imageio:2.0.24"
-    compile "net.sf.qtjambi:qtjambi-base-linux64:4.6.3.2"
-    compile "net.sf.qtjambi:qtjambi-platform-linux64:4.6.3.2"
+    compile_base project(':viskit')
+    compile_base "rhino:js:1.7R2"
+    compile_base "org.hsqldb:hsqldb:2.0.0"
+    compile_base "org.springframework:spring-core:$useSpringVersion"
+    compile_base "org.springframework:spring-beans:$useSpringVersion"
+    compile_base "org.springframework:spring-expression:$useSpringVersion"
+    compile_base "org.springframework:spring-context:$useSpringVersion"
+    compile_base "org.springframework:spring-aop:$useSpringVersion"
+    compile_base "org.springframework:spring-aspects:$useSpringVersion"
+    compile_base "org.springframework:spring-tx:$useSpringVersion"
+    compile_base "org.springframework:spring-jdbc:$useSpringVersion"
+    compile_base "log4j:log4j:1.2.13"
+    compile_base "commons-lang:commons-lang:2.5"
+    compile_base "com.google.guava:guava:r05"
+    compile_base "net.java.dev.appframework:appframework:1.03"
+    compile_base "org.swinglabs:swing-layout:1.0.3"
+    compile_base "net.java.dev.beansbinding:beansbinding:1.2.1"
+    compile_base "dcm4che:dcm4che-core:2.0.24"
+    compile_base "dcm4che:dcm4che-imageio:2.0.24"
 }
+
+platforms.each { p ->
+    def platform_compile_config = configurations.add "compile_$p"
+    dependencies.add "compile_$p", "net.sf.qtjambi:qtjambi-base-$p:4.6.3.2"
+    platform_compile_config.extendsFrom configurations.compile_base
+
+    def platform_runtime_config = configurations.add "runtime_$p"
+    dependencies.add "runtime_$p", "net.sf.qtjambi:qtjambi-platform-$p:4.6.3.2"
+    platform_runtime_config.extendsFrom platform_compile_config
+}
+
+def runningPlatform = getRunningPlatform()
+configurations.compile.extendsFrom configurations["compile_$runningPlatform"]
+configurations.runtime.extendsFrom configurations["runtime_$runningPlatform"]
+
+def getRunningPlatform() {
+    def oses = [linux:'linux', windows:'win', mac:'mac']
+    def archs = [x86:'32', i386:'32', amd64:'64', x86_64:'64', x64:'64']
+    def osname = System.getProperty("os.name").split()[0].toLowerCase()
+    def osarch = System.getProperty("os.arch")
+    def os = oses[osname]
+    def arch = archs[osarch]
+    if (!os || !arch) {
+        throw new GradleException("unsupported platform: $osname / $osarch") //TODO: compiling should work on unsupported platforms
+    }
+    return "$os$arch"
+}
+
 
 apply plugin:'application'
 
 mainClassName = "de.sofd.iirkit.App"
+
+//TODO: cross-platform distZip tasks
+
+task debug << {
+    println "os.name: " + System.getProperty("os.name")
+    println "os.arch: " + System.getProperty("os.arch")
+    println "getRunningPlatform(): " + getRunningPlatform()
+
+    configurations.each { c ->
+        println "config: $c"
+        c.allDependencies.each { d ->
+            println "    dep: $d"
+        }
+    }
+}
