@@ -42,8 +42,10 @@ platforms.each { p ->
 }
 
 def runningPlatform = getRunningPlatform()
-configurations.compile.extendsFrom configurations["compile_$runningPlatform"]
-configurations.runtime.extendsFrom configurations["runtime_$runningPlatform"]
+if (runningPlatform) {
+    configurations.compile.extendsFrom configurations["compile_$runningPlatform"]
+    configurations.runtime.extendsFrom configurations["runtime_$runningPlatform"]
+}
 
 def getRunningPlatform() {
     def oses = [linux:'linux', windows:'win', mac:'mac']
@@ -53,27 +55,80 @@ def getRunningPlatform() {
     def os = oses[osname]
     def arch = archs[osarch]
     if (!os || !arch) {
-        throw new GradleException("unsupported platform: $osname / $osarch") //TODO: compiling should work on unsupported platforms
+        //unsupported platform (but we can still compile here)
+        return null;
     }
     return "$os$arch"
 }
 
 
-apply plugin:'application'
+def mainClassName = 'de.sofd.iirkit.App'
 
-mainClassName = "de.sofd.iirkit.App"
+task run(type: JavaExec) {
+    description = 'Run iirkit directly from the build directory'
+    classpath = sourceSets.main.runtimeClasspath
+    main = mainClassName
+    //args = //TODO
+}
 
-//TODO: cross-platform distZip tasks
+platforms.each { p ->
+    ssTask = project.tasks.add("startScripts_$p", org.gradle.api.tasks.application.CreateStartScripts)
+    ssTask.description = "Creates start scripts ($p)"
+    ssTask.mainClassName = mainClassName
+    ssTask.applicationName = 'iirkit'
+    ssTask.classpath = tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + configurations["runtime_$p"]
+    ssTask.outputDir = new File(project.buildDir, "scripts_$p")
 
-task debug << {
-    println "os.name: " + System.getProperty("os.name")
-    println "os.arch: " + System.getProperty("os.arch")
-    println "getRunningPlatform(): " + getRunningPlatform()
-
-    configurations.each { c ->
-        println "config: $c"
-        c.allDependencies.each { d ->
-            println "    dep: $d"
+    def applicationDistribution = project.copySpec {
+        from(project.file("src/dist"))
+        
+        into("lib") {
+            from(tasks[JavaPlugin.JAR_TASK_NAME])
+            from(configurations["runtime_$p"])
         }
+        into("bin") {
+            from(ssTask)
+            fileMode = 0755
+        }
+    }
+
+    def instTask = tasks.add("install_$p", org.gradle.api.tasks.Sync)
+    instTask.description = "Installs the project, including all dependencies, into a directory, for creating the zip file later ($p)"
+    instTask.with applicationDistribution
+    instTask.into { project.file("${project.buildDir}/install_${p}/iirkit") }
+    instTask.doFirst {
+        if (destinationDir.directory) {
+            if (!new File(destinationDir, 'lib').directory || !new File(destinationDir, 'bin').directory) {
+                throw new GradleException("The specified installation directory '${destinationDir}' is neither empty nor does it contain an installation for iirkit.\n" +
+                                          "If you really want to install to this directory, delete it and run the install task again.\n" +
+                                          "Alternatively, choose a different installation directory."
+                                         )
+            }
+        }
+    }
+    instTask.doLast {
+        project.ant.chmod(file: "${destinationDir.absolutePath}/bin/iirkit", perm: 'ugo+x')
+    }
+
+    def distZipTask = project.tasks.add("distZip_$p", org.gradle.api.tasks.bundling.Zip)
+    distZipTask.description = "Bundles the project as a JVM application with libs and OS specific scripts into a zip file ($p)"
+    distZipTask.baseName = "iirkit-$p"
+    def baseDir = { distZipTask.archiveName - ".zip" }
+    distZipTask.into(baseDir) {
+        with(applicationDistribution)
+    }
+}
+
+if (runningPlatform) {
+    task distZip {
+        description "Bundles the project as a JVM application with libs and OS specific scripts into a zip file for the running platform ($runningPlatform)"
+        dependsOn tasks["distZip_$runningPlatform"]
+    }
+}
+
+task distZipAll {
+    description "Creates zip files for all supported platforms"
+    platforms.each { p ->
+        dependsOn tasks["distZip_$p"]
     }
 }
