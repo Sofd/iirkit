@@ -1,11 +1,18 @@
 package de.sofd.iirkit.form;
 
+import java.lang.reflect.Method;
+
+import org.apache.log4j.Logger;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
+
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.trolltech.qt.gui.QApplication;
-import com.trolltech.qt.gui.QMainWindow;
-import com.trolltech.qt.gui.QToolBar;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -20,8 +27,8 @@ public class FormFrameTestApp {
 
     private final FormFrame formFrame;
 
-    public FormFrameTestApp(String[] args) {
-        formFrame = new FormFrame();
+    public FormFrameTestApp(Display display, String[] args) {
+        formFrame = new FormFrame(display);
         formFrame.addFormListener(new FormListener() {
             @Override
             public void formOpened(FormEvent event) {
@@ -46,22 +53,43 @@ public class FormFrameTestApp {
         });
         formFrame.show();
 
-        QMainWindow controllerFrame = new QMainWindow();
-        controllerFrame.setWindowTitle("control");
-        QToolBar toolbar = controllerFrame.addToolBar("Actions");
-        toolbar.setFloatable(false);
-        toolbar.addAction("show").triggered.connect(this, "showForm()");
-        toolbar.addAction("hide").triggered.connect(this, "hideForm()");
-        toolbar.addAction("form1").triggered.connect(this, "form1()");
-        toolbar.addAction("form2").triggered.connect(this, "form2()");
-        toolbar.addAction("fill1").triggered.connect(this, "fill1()");
-        toolbar.addAction("fill2").triggered.connect(this, "fill2()");
-        toolbar.addAction("formfill1").triggered.connect(this, "formfill1()");
-        toolbar.addAction("formfill2").triggered.connect(this, "formfill2()");
-        toolbar.addAction("bugtest").triggered.connect(this, "bugtest()");
-        toolbar.addAction("clear").triggered.connect(this, "clear()");
-        toolbar.addAction("exit").triggered.connect(this, "exit()");
-        controllerFrame.show();
+        Shell controllerFrame = new Shell(display);
+        controllerFrame.setText("control");
+        ToolBar toolbar = new ToolBar(controllerFrame, SWT.FLAT | SWT.WRAP | SWT.RIGHT);
+        addToolItem(toolbar, "showForm");
+        addToolItem(toolbar, "hideForm");
+        addToolItem(toolbar, "form1");
+        addToolItem(toolbar, "form2");
+        addToolItem(toolbar, "fill1");
+        addToolItem(toolbar, "fill2");
+        addToolItem(toolbar, "formfill1");
+        addToolItem(toolbar, "formfill2");
+        addToolItem(toolbar, "bugtest");
+        addToolItem(toolbar, "clear");
+        addToolItem(toolbar, "exit");
+        addToolItem(toolbar, "test1");
+        addToolItem(toolbar, "loadURI");
+        addToolItem(toolbar, "loadJquery");
+        addToolItem(toolbar, "loadFormutils");
+        toolbar.pack();
+        controllerFrame.open();
+        controllerFrame.pack();
+    }
+    
+    private void addToolItem(ToolBar toolbar, final String actionMethodName) {
+        ToolItem itemPush = new ToolItem(toolbar, SWT.PUSH);
+        itemPush.setText(actionMethodName);
+        itemPush.addListener(SWT.Selection, new Listener() {
+            public void handleEvent(Event event) {
+                try {
+                    Method m = FormFrameTestApp.this.getClass().getDeclaredMethod(actionMethodName);
+                    m.setAccessible(true);
+                    m.invoke(FormFrameTestApp.this);
+                } catch (Exception e) {
+                    logger.error("error running method " + actionMethodName, e);
+                }
+            }
+        });
     }
 
     private void showForm() {
@@ -120,16 +148,55 @@ public class FormFrameTestApp {
         //fill1 (interactively) will err after this (see doc/todo.txt)
         // can also be reproduced interactively: start app, close form, show, form1, fill1
     }
-
-    private void exit() {
-        QApplication.exit();
+    
+    private void test1() {
+        //formFrame.runJavascriptInForm("setHeadline('HELLO!!')");
+        formFrame.runJavascriptInForm("formutilheadline('foo')");
     }
 
+    private void loadURI() {
+        try {
+            formFrame.runJavascriptStreamInForm(FormFrame.class.getResourceAsStream("URI.min.js"));
+            logger.debug("URI.min.js loaded (manually from test app)");
+        } catch (Exception e) {
+            logger.error("URI.min.js load error", e);
+        }
+    }
+
+    private void loadJquery() {
+        try {
+            formFrame.runJavascriptStreamInForm(FormFrame.class.getResourceAsStream("jquery-1.7.2.min.js"));
+            logger.debug("jquery-1.7.2.min.js loaded (manually from test app)");
+        } catch (Exception e) {
+            logger.error("jquery-1.7.2.min.js load error", e);
+        }
+    }
+
+    private void loadFormutils() {
+        try {
+            formFrame.runJavascriptStreamInForm(FormFrame.class.getResourceAsStream("formutils.js"));
+            logger.debug("formutils.js loaded (manually from test app)");
+        } catch (Exception e) {
+            logger.error("formutils.js load error", e);
+        }
+    }
+
+    private void exit() {
+        exit = true;
+    }
+    
+    private static boolean exit = false;
+
     public static void main(final String[] args) throws Exception {
-        QApplication.initialize(new String[0]);
-        new FormFrameTestApp(args);
-        QApplication.exec();
-        System.err.println("QT thread finished.");
+        Display display = new Display();
+        new FormFrameTestApp(display, args);
+        while (!exit) {
+            if (!display.readAndDispatch()) {
+                display.sleep();
+            }
+        }
+        display.dispose();
+        System.err.println("SWT thread finished.");
    }
 
 }
