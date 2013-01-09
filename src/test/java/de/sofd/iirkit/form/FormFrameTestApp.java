@@ -24,6 +24,7 @@ public class FormFrameTestApp {
 
     private final String FORM1_URL = "file:///home/olaf/hieronymusr/iirkit-test/ecrf/312046_11.html";
     private final String FORM2_URL = "file:///home/olaf/hieronymusr/iirkit-test/ecrf/form2.html";
+    private final String NOTFOUND_URL = "file:///home/olaf/hieronymusr/iirkit-test/ecrf/foobar_idontexist.html";
 
     private final FormFrame formFrame;
 
@@ -60,6 +61,7 @@ public class FormFrameTestApp {
         addToolItem(toolbar, "hideForm");
         addToolItem(toolbar, "form1");
         addToolItem(toolbar, "form2");
+        addToolItem(toolbar, "form_404");
         addToolItem(toolbar, "fill1");
         addToolItem(toolbar, "fill2");
         addToolItem(toolbar, "formfill1");
@@ -108,6 +110,11 @@ public class FormFrameTestApp {
     private void form2() {
         formFrame.setUrl(FORM2_URL);
         logger.debug("form2 loaded");
+    }
+    
+    private void form_404() {
+        formFrame.setUrl(NOTFOUND_URL);
+        logger.debug("not-found URL set");
     }
 
     private void fill1() {

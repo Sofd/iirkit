@@ -18,7 +18,6 @@ import org.eclipse.swt.browser.LocationEvent;
 import org.eclipse.swt.browser.LocationListener;
 import org.eclipse.swt.browser.ProgressAdapter;
 import org.eclipse.swt.browser.ProgressEvent;
-import org.eclipse.swt.browser.ProgressListener;
 import org.eclipse.swt.browser.StatusTextEvent;
 import org.eclipse.swt.browser.StatusTextListener;
 import org.eclipse.swt.layout.GridData;
@@ -50,7 +49,8 @@ import de.sofd.util.IdentityHashSet;
  public class FormFrame {
     static final Logger logger = Logger.getLogger(FormFrame.class);
 
-    private Shell formShell;
+    private final Display display;
+    private final Shell formShell;
     private Text addressBar;
     private Browser browser;
     private Label statusLine;
@@ -60,6 +60,8 @@ import de.sofd.util.IdentityHashSet;
     private Exception loadError = null;
 
     private final Collection<FormListener> formListeners = new IdentityHashSet<FormListener>();
+    
+    private boolean nestedEventLoopExitRequested = false;
 
     public FormFrame(Display display) {
         this(display, null);
@@ -71,9 +73,11 @@ import de.sofd.util.IdentityHashSet;
 
     protected FormFrame(Display display, Shell parentShell) {
         if (display != null) {
-            formShell = new Shell(display);
+            this.formShell = new Shell(display);
+            this.display = display;
         } else {
-            formShell = new Shell(parentShell);
+            this.formShell = new Shell(parentShell);
+            this.display = parentShell.getDisplay();
         }
         formShell.setText("eCRF");
         formShell.setSize(900, 600);
@@ -164,6 +168,10 @@ import de.sofd.util.IdentityHashSet;
         
         browser.addProgressListener(new ProgressAdapter() {
             @Override
+            public void changed(ProgressEvent event) {
+                logger.debug("ProgressAdapter#changed...");
+            }
+            @Override
             public void completed(ProgressEvent event) {
                 try {
                     logger.debug("loading JS utilities...");
@@ -185,6 +193,9 @@ import de.sofd.util.IdentityHashSet;
             }
         });
         
+        //TODO: exitNestedEventLoop() on page load errors too.
+        // See also http://stackoverflow.com/questions/14244301/swt-browser-how-to-detect-page-load-errors
+        
         browser.addStatusTextListener(new StatusTextListener() {
             @Override
             public void changed(StatusTextEvent event) {
@@ -193,17 +204,6 @@ import de.sofd.util.IdentityHashSet;
             }
         });
         
-        browser.addProgressListener(new ProgressListener() {
-            //TODO: progress bar
-            @Override
-            public void completed(ProgressEvent event) {
-                
-            }
-            @Override
-            public void changed(ProgressEvent event) {
-            }
-        });
-
         formShell.open();
     }
 
@@ -223,13 +223,16 @@ import de.sofd.util.IdentityHashSet;
     }
     
     private void runNestedEventLoop() {
-        //TODO
-        //waitForLoadEventLoop.exec();
+        nestedEventLoopExitRequested = false;
+        while (!nestedEventLoopExitRequested) {
+            if (!display.readAndDispatch()) {
+                display.sleep();
+            }
+        }
     }
     
     private void exitNestedEventLoop() {
-        //TODO
-        //waitForLoadEventLoop.exit();
+        nestedEventLoopExitRequested = true;
     }
 
     public void setFormContents(Multimap<String, String> params) {
