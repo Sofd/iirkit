@@ -366,5 +366,9 @@ import de.sofd.util.IdentityHashSet;
     public Object removeAttribute(String name) {
         return attributes.remove(name);
     }
+    
+    public Shell getShell() {
+        return formShell;
+    }
 
 }

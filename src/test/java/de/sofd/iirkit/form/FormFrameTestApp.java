@@ -1,7 +1,6 @@
 package de.sofd.iirkit.form;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -29,6 +28,7 @@ public class FormFrameTestApp {
     private final String NOTFOUND_URL = "file:///home/olaf/hieronymusr/iirkit-test/ecrf/foobar_idontexist.html";
 
     private final FormFrame formFrame;
+    private final Shell controllerFrame;
 
     public FormFrameTestApp(Display display, String[] args) {
         formFrame = new FormFrame(display);
@@ -60,7 +60,7 @@ public class FormFrameTestApp {
         });
         formFrame.show();
 
-        Shell controllerFrame = new Shell(display);
+        controllerFrame = new Shell(display);
         controllerFrame.setText("control");
         ToolBar toolbar = new ToolBar(controllerFrame, SWT.FLAT | SWT.WRAP | SWT.RIGHT);
         addToolItem(toolbar, "showForm");
@@ -198,12 +198,16 @@ public class FormFrameTestApp {
         exit = true;
     }
     
+    public boolean shouldExit() {
+        return exit || formFrame.getShell().isDisposed() || controllerFrame.isDisposed();
+    }
+    
     private static boolean exit = false;
 
     public static void main(final String[] args) throws Exception {
         Display display = new Display();
-        new FormFrameTestApp(display, args);
-        while (!exit) {
+        FormFrameTestApp app = new FormFrameTestApp(display, args);
+        while (!app.shouldExit()) {
             if (!display.readAndDispatch()) {
                 display.sleep();
             }
