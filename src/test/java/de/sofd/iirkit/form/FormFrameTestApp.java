@@ -1,6 +1,8 @@
 package de.sofd.iirkit.form;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 import org.eclipse.swt.SWT;
@@ -50,6 +52,10 @@ public class FormFrameTestApp {
             @Override
             public void formSubmitted(FormEvent event) {
                 logger.info("Event received: " + event);
+                logger.info(" result params:");
+                for (Entry<String, String> entry: event.getFormResultMap().entries()) {
+                    logger.info("   " + entry.getKey() + " = " + entry.getValue());
+                }
             }
         });
         formFrame.show();

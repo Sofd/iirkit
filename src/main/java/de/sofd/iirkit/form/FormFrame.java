@@ -3,8 +3,10 @@ package de.sofd.iirkit.form;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -134,35 +136,40 @@ import de.sofd.util.IdentityHashSet;
             
             @Override
             public void changing(LocationEvent event) {
-                if (event.top) {
-                    URL url;
-                    try {
-                        url = new URL(event.location);
-                        if (pathIsEcrfSubmit(url.getPath())) {
-                            logger.debug("form submitted: " + url);
-                            Multimap<String,String> requestParams = ArrayListMultimap.create();
-                            if (url.getQuery() != null) {
-                                //TODO
-//                                for (QPair<String,String> item : url.getQuery()) {
-//                                    requestParams.put(item.first, item.second);
-//                                }
+                URL url;
+                try {
+                    url = new URL(event.location);
+                    if (pathIsEcrfSubmit(url.getPath())) {
+                        logger.debug("form submitted: " + url);
+                        Multimap<String,String> requestParams = ArrayListMultimap.create();
+                        if (url.getQuery() != null) {
+                            for (String nameEqValue : url.getQuery().split("&")) {
+                                //TODO: handle nameEqValue ending with =
+                                String[] nameVal = nameEqValue.split("=");
+                                if (nameVal.length == 1 && nameEqValue.endsWith("=")) {
+                                    nameVal = new String[] {nameVal[0], ""};
+                                }
+                                if (nameVal.length != 2) {
+                                    logger.warn("query parameter doesn't contain exactly one equals sign; ignored: " + nameEqValue);
+                                } else {
+                                    try {
+                                        requestParams.put(nameVal[0], URLDecoder.decode(nameVal[1], "utf-8"));
+                                    } catch (UnsupportedEncodingException e) {
+                                        throw new IllegalStateException("query parameter not decodable: " + nameEqValue, e);
+                                    }
+                                }
                             }
-                            event.doit = false;
-                            fireFormEvent(new FormEvent(FormEvent.Type.FORM_SUBMITTED, url.toString(), requestParams));
                         }
-                    } catch (MalformedURLException e) {
-                        statusLine.setText("Malformed URL: " + event.location);
+                        event.doit = false;
+                        fireFormEvent(new FormEvent(FormEvent.Type.FORM_SUBMITTED, url.toString(), requestParams));
                     }
+                } catch (MalformedURLException e) {
+                    statusLine.setText("Malformed URL: " + event.location);
                 }
-                //statusLine.setText("loading " + event.location + " ...");
             }
             
             @Override
             public void changed(LocationEvent event) {
-                if (event.top) {
-                    addressBar.setText(event.location);
-                }
-                //statusLine.setText("Done.");
             }
         });
         
