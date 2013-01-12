@@ -22,6 +22,8 @@ import org.eclipse.swt.browser.ProgressAdapter;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.StatusTextEvent;
 import org.eclipse.swt.browser.StatusTextListener;
+import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
@@ -195,7 +197,14 @@ import de.sofd.util.IdentityHashSet;
                 statusLine.setText(event.text);
             }
         });
-        
+
+        formShell.addListener(SWT.Close, new Listener() {
+            public void handleEvent(Event event) {
+                event.doit = false;
+                hide();
+            }
+        });
+
         formShell.open();
     }
 
@@ -260,14 +269,17 @@ import de.sofd.util.IdentityHashSet;
 
     public void show() {
         formShell.setVisible(true);
+        fireFormEvent(new FormEvent(FormEvent.Type.FORM_SHOWN));
     }
     
     public void hide() {
         formShell.setVisible(false);
+        fireFormEvent(new FormEvent(FormEvent.Type.FORM_HIDDEN));
     }
     
     public void close() {
         formShell.close();
+        fireFormEvent(new FormEvent(FormEvent.Type.FORM_DELETED));
     }
     
     public void setGeometry(int x, int y, int width, int height) {
