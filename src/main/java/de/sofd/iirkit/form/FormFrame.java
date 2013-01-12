@@ -144,7 +144,6 @@ import de.sofd.util.IdentityHashSet;
                         Multimap<String,String> requestParams = ArrayListMultimap.create();
                         if (url.getQuery() != null) {
                             for (String nameEqValue : url.getQuery().split("&")) {
-                                //TODO: handle nameEqValue ending with =
                                 String[] nameVal = nameEqValue.split("=");
                                 if (nameVal.length == 1 && nameEqValue.endsWith("=")) {
                                     nameVal = new String[] {nameVal[0], ""};
@@ -244,26 +243,23 @@ import de.sofd.util.IdentityHashSet;
 
     public void setFormContents(Multimap<String, String> params) {
         setFormContents(FormUtils.paramsToQueryString(params));
-        //TODO: figure out how to convert params into a JS object (map) directly
-        //  rather than converting it to a string first
     }
 
-    public void setFormContents(String formContentsAsQueryString) {
-        browser.execute("__fillForm(\"" + quoteQueryString(formContentsAsQueryString) + "\")");
-    }
-
-    private String quoteQueryString(String formContentsAsQueryString) {
-        //TODO
-        return formContentsAsQueryString;
-    }
-    
     /**
-     * Must be called in QT thread.
+     * 
+     * @param formContentsAsQueryString properly encoded URL query string
+     */
+    public void setFormContents(String formContentsAsQueryString) {
+        browser.execute("__fillForm(\"" + formContentsAsQueryString + "\")");
+    }
+
+    /**
+     * Must be called in SWT thread.
      *
      * @param jsCode
      */
     public void runJavascriptInForm(String jsCode) {
-        //TODO: synchronize with loadDone() etc.?
+        //TODO: synchronize with form load etc.?
         try {
             browser.execute(jsCode);
         } catch (Exception e) {
@@ -277,36 +273,16 @@ import de.sofd.util.IdentityHashSet;
     }
 
     public void show() {
-        //formShell.setVisible(true);
-        formShell.open();
+        formShell.setVisible(true);
     }
     
     public void hide() {
-        //formShell.setVisible(false);
-        formShell.close();
+        formShell.setVisible(false);
     }
     
     public void close() {
         formShell.close();
     }
-    
-    /*
-     * TODO
-    @Override
-    protected void showEvent(QShowEvent event) {
-        fireFormEvent(new FormEvent(FormEvent.Type.FORM_SHOWN));
-    }
-
-    @Override
-    protected void hideEvent(QHideEvent event) {
-        fireFormEvent(new FormEvent(FormEvent.Type.FORM_HIDDEN));
-    }
-
-    @Override
-    protected void closeEvent(QCloseEvent event) {
-        //fireFormEvent(new FormEvent(FormEvent.Type.FORM_HIDDEN));
-    }
-    */
     
     public void setGeometry(int x, int y, int width, int height) {
         formShell.setBounds(x, y, width, height);
