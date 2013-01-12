@@ -53,7 +53,6 @@ import de.sofd.util.IdentityHashSet;
 
     private final Display display;
     private final Shell formShell;
-    private Text addressBar;
     private Browser browser;
     private Label statusLine;
     private final Map<String, Object> attributes = new HashMap<String, Object>();
@@ -92,8 +91,6 @@ import de.sofd.util.IdentityHashSet;
         gd.horizontalAlignment = SWT.FILL;
         gd.grabExcessHorizontalSpace = true;
         gd.grabExcessVerticalSpace = false;
-        addressBar = new Text(formShell, SWT.SINGLE | SWT.BORDER);
-        addressBar.setLayoutData(gd);
 
         gd = new GridData();
         gd.horizontalAlignment = SWT.FILL;
@@ -112,17 +109,6 @@ import de.sofd.util.IdentityHashSet;
         statusLine = new Label(formShell, SWT.LEFT | SWT.SHADOW_ETCHED_IN);
         statusLine.setLayoutData(gd);
 
-        addressBar.addListener(SWT.DefaultSelection, new Listener() {
-            @Override
-            public void handleEvent(Event event) {
-                String address = addressBar.getText();
-                if (!(address.startsWith("http://") || address.startsWith("https://"))) {
-                    address = (address.startsWith("/") ? "file://" : "http://") + address;
-                }
-                browser.setUrl(address);
-            }
-        });
-        
         browser.addLocationListener(new LocationListener() {
             
             private boolean pathIsEcrfSubmit(String path) {
