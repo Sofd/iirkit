@@ -1,28 +1,24 @@
 package de.sofd.iirkit.form;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.trolltech.qt.core.QCoreApplication;
-import com.trolltech.qt.core.Qt.WidgetAttribute;
-import com.trolltech.qt.gui.QApplication;
-import de.sofd.iirkit.App;
-import de.sofd.util.IdentityHashSet;
 import java.awt.Rectangle;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
+
 import javax.swing.SwingUtilities;
+
 import org.apache.log4j.Logger;
+import org.eclipse.swt.widgets.Display;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+
+import de.sofd.iirkit.App;
+import de.sofd.util.IdentityHashSet;
 
 /**
  * FormRunner. Manages a single form window, displaying an HTML (form) page and
  * handling form submits etc.
- * <p>
- * Runs a Qt event thread internally, and in it a {@link FormFrame}. FormRunner
- * itself is meant to be used from the swing event thread only; it essentially
- * exposes the FormFrame's (Qt-based) functionality to the Swing thread
- * synchronously, and isolates the caller from all the synchronization/MT issues
- * involved.
  * <p>
  * Usage: Create a FormRunner, register a {@link FormListener} to be informed
  * about any state changes, call any of FormRunner#openForm to display the form
@@ -32,6 +28,12 @@ import org.apache.log4j.Logger;
  * the form without losing its state; it can be re-shown using {@link #showForm()}
  * at any time. When the user closes the form interactively, this has the same
  * effect as calling hide().
+ * <p>
+ * Runs an SWT event thread internally, and in it a {@link FormFrame}. FormRunner
+ * itself is meant to be used from the swing event thread only; it essentially
+ * exposes the FormFrame's (SWT-based) functionality to the Swing thread
+ * synchronously, and isolates the caller from all the synchronization/MT issues
+ * involved.
  *
  * @author Olaf Klischat
  */
@@ -41,55 +43,61 @@ public class FormRunner {
 
     private FormFrame formFrame;
     private final App app;
-    private boolean isInQtExec = false, isInSwingExec = false;
+    private boolean isInSWTExec = false, isInSwingExec = false;
     private final Collection<FormListener> formListeners = new IdentityHashSet<FormListener>();
 
-    private static final CountDownLatch qtInitializedSignal = new CountDownLatch(1);
+    private static final CountDownLatch swtInitializedSignal = new CountDownLatch(1);
+    
+    private static Display display;
+    private static boolean formThreadShouldExit = false;
 
     /**
-     * There's only one QT thread that runs continuously and is shared
-     * by all FormRunners (until FormRunner.dispose()). All FormRunners
-     * (if there is more than one) run their QT UI in this thread.
+     * There's only one SWT thread that runs continuously and is shared by all
+     * FormRunners (until FormRunner.dispose()). All FormRunners (if there is
+     * more than one, which is rarely the case) run their UI in this thread.
      */
-    private static Thread qtThread = new Thread("QT event loop") {
+    private static Thread swtThread = new Thread("SWT event loop") {
 
         @Override
         public void run() {
-            QApplication.initialize(new String[0]);
-            QApplication.setQuitOnLastWindowClosed(false);
-            qtInitializedSignal.countDown();
-            QApplication.exec();
-            logger.debug("QT thread finished.");
+            display = new Display();
+            swtInitializedSignal.countDown();
+            while (!formThreadShouldExit) {
+                if (!display.readAndDispatch()) {
+                    display.sleep();
+                }
+            }
+            logger.debug("Form thread finished.");
         }
 
     };
 
-    protected void qtExec(Runnable r) {
+    protected void swtExec(Runnable r) {
         if (isInSwingExec) {
             //if we're in a swingExec(),
-            // calling QApplication.invokeAndWait would lead to a deadlock
-            // (we assume that qtExec is called from the Swing thread)
-            //TODO: invokeLater() means that the job may run very late/asynchronous
-            logger.debug("must run Qt job asynchronously b/c we're in a Swing invokeAndWait");
-            QApplication.invokeLater(r);
+            // calling display.syncExec would lead to a deadlock
+            // (we assume that swtExec is called from the Swing thread)
+            //TODO: asyncExec() means that the job may run very late/asynchronous
+            logger.debug("must run form job asynchronously b/c we're in a Swing invokeAndWait");
+            display.asyncExec(r);
         } else {
-            boolean wasInQtExec = isInQtExec;
-            isInQtExec = true;
+            boolean wasInSWTExec = isInSWTExec;
+            isInSWTExec = true;
             try {
-                QApplication.invokeAndWait(r);
+                display.syncExec(r);
             } finally {
-                isInQtExec = wasInQtExec;
+                isInSWTExec = wasInSWTExec;
             }
         }
     }
 
     protected void swingExec(Runnable r) {
-        if (isInQtExec) {
-            //if we're in a qtExec(),
+        if (isInSWTExec) {
+            //if we're in a swtExec(),
             // calling SwingUtilities.invokeAndWait would lead to a deadlock
-            // (we assume that swingExec is called from the Qt thread)
+            // (we assume that swingExec is called from the SWT thread)
             //TODO: invokeLater() means that the job may run very late/asynchronous
-            logger.debug("must run Swing job asynchronously b/c we're in a Qt invokeAndWait");
+            logger.debug("must run Swing job asynchronously b/c we're in a SWT syncExec");
             SwingUtilities.invokeLater(r);
         } else {
             boolean wasInSwingExec = isInSwingExec;
@@ -108,10 +116,10 @@ public class FormRunner {
 
     public FormRunner(App app) {
         this.app = app;
-        if (!qtThread.isAlive()) {
-            qtThread.start();
+        if (!swtThread.isAlive()) {
+            swtThread.start();
             try {
-                qtInitializedSignal.await();
+                swtInitializedSignal.await();
             } catch (InterruptedException ex) {
                 throw new IllegalStateException("UI thread interrupted. SHOULDN'T HAPPEN", ex);
             }
@@ -136,7 +144,7 @@ public class FormRunner {
      */
     public void openForm(final String url, final Rectangle formBounds, final String formContentsAsQueryString) {
         ensureFormFrameExists();
-        qtExec(new Runnable() {
+        swtExec(new Runnable() {
             @Override
             public void run() {
                 if (null != url) {
@@ -154,11 +162,11 @@ public class FormRunner {
     }
 
     protected void ensureFormFrameExists() {
-        qtExec(new Runnable() {
+        swtExec(new Runnable() {
             @Override
             public void run() {
                 if (null == formFrame) {
-                    formFrame = new FormFrame() {
+                    formFrame = new FormFrame(display) {
                         @Override
                         protected void fireFormEvent(final FormEvent evt) {
                             super.fireFormEvent(evt);
@@ -170,7 +178,6 @@ public class FormRunner {
                             });
                         }
                     };
-                    formFrame.setAttribute(WidgetAttribute.WA_DeleteOnClose, false);  //this is the default, but make it explicit that we need this
                 }
             }
         });
@@ -178,7 +185,7 @@ public class FormRunner {
 
     public void setFormContents(final Multimap<String, String> params) {
         ensureFormFrameExists();
-        qtExec(new Runnable() {
+        swtExec(new Runnable() {
             @Override
             public void run() {
                 formFrame.setFormContents(params);
@@ -188,7 +195,7 @@ public class FormRunner {
 
     public void setFormContents(final String formContentsAsQueryString) {
         ensureFormFrameExists();
-        qtExec(new Runnable() {
+        swtExec(new Runnable() {
             @Override
             public void run() {
                 formFrame.setFormContents(formContentsAsQueryString);
@@ -199,7 +206,7 @@ public class FormRunner {
 
     public void showForm() {
         ensureFormFrameExists();
-        qtExec(new Runnable() {
+        swtExec(new Runnable() {
             @Override
             public void run() {
                 formFrame.show();
@@ -208,7 +215,7 @@ public class FormRunner {
     }
 
     public void hideForm() {
-        qtExec(new Runnable() {
+        swtExec(new Runnable() {
             @Override
             public void run() {
                 if (null != formFrame) {
@@ -219,7 +226,7 @@ public class FormRunner {
     }
 
     public void deleteForm() {
-        qtExec(new Runnable() {
+        swtExec(new Runnable() {
             @Override
             public void run() {
                 if (null != formFrame) {
@@ -236,7 +243,7 @@ public class FormRunner {
 
     public void setFormBounds(final Rectangle formBounds) {
         ensureFormFrameExists();
-        qtExec(new Runnable() {
+        swtExec(new Runnable() {
             @Override
             public void run() {
                 if (null != formBounds) {
@@ -288,7 +295,7 @@ public class FormRunner {
     public void runJavascriptInFormAsync(final String jsCode) {
         //TODO: synchronize with form loading
         ensureFormFrameExists();
-        QApplication.invokeLater(new Runnable() {
+        display.asyncExec(new Runnable() {
             @Override
             public void run() {
                 formFrame.runJavascriptInForm(jsCode);
@@ -301,10 +308,10 @@ public class FormRunner {
      * at the end of the application's lifetime).
      */
     public static void dispose() {
-        QApplication.invokeLater(new Runnable() {
+        display.asyncExec(new Runnable() {
             @Override
             public void run() {
-                QCoreApplication.exit(0);
+                formThreadShouldExit = true;
             }
         });
     }
