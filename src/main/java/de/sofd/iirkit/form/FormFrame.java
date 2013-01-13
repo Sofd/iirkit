@@ -162,10 +162,6 @@ import de.sofd.util.IdentityHashSet;
         
         browser.addProgressListener(new ProgressAdapter() {
             @Override
-            public void changed(ProgressEvent event) {
-                logger.debug("ProgressAdapter#changed...");
-            }
-            @Override
             public void completed(ProgressEvent event) {
                 try {
                     logger.debug("loading JS utilities...");
@@ -193,7 +189,6 @@ import de.sofd.util.IdentityHashSet;
         browser.addStatusTextListener(new StatusTextListener() {
             @Override
             public void changed(StatusTextEvent event) {
-                logger.debug("StatusTextEvent: " + event);
                 statusLine.setText(event.text);
             }
         });
