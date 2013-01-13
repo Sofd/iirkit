@@ -78,13 +78,28 @@ def getRunningPlatform() {
 
 def appName = 'iirkit'
 def mainClassName = 'de.sofd.iirkit.App'
+jvmOptsMap = [
+    /.*/: ['-Xmx800m', '-Xms64m'],
+    /^gtk/: ['-DsuppressSwingDropSupport=true'],
+    /^cocoa.macosx/: ['-XstartOnFirstThread']
+]
+
+def getJvmOptsForPlatform(p) {
+    def result = []
+    jvmOptsMap.each { platformPat, opts ->
+        if (p =~ platformPat) {
+            result.addAll opts
+        }
+    }
+    result
+}
 
 if (runningPlatform) {
     task run(type: JavaExec) {
         description = "Run $appName directly from the build directory"
         classpath = sourceSets.main.runtimeClasspath
         main = mainClassName
-        //args = //TODO
+        jvmArgs = getJvmOptsForPlatform(runningPlatform)
     }
 }
 
@@ -95,6 +110,11 @@ platforms.each { p ->
     ssTask.applicationName = appName
     ssTask.classpath = tasks[JavaPlugin.JAR_TASK_NAME].outputs.files + configurations["runtime_$p"]
     ssTask.outputDir = new File(project.buildDir, "scripts_$p")
+    def jvmOpts = getJvmOptsForPlatform(p)
+    ssTask.doLast {
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS="' + jvmOpts.collect{/'$it'/}.join(' ') + '"')
+        windowsScript.text = windowsScript.text.replace('set DEFAULT_JVM_OPTS=', 'set DEFAULT_JVM_OPTS='+ jvmOpts.collect{/"$it"/}.join(' '))
+    }
 
     def applicationDistribution = project.copySpec {
         from(project.file("src/dist"))
