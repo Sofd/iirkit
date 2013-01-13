@@ -1,5 +1,6 @@
 package de.sofd.iirkit;
 
+import de.sofd.iirkit.form.FormRunner;
 import de.sofd.iirkit.service.CsvIirServiceImpl;
 import de.sofd.iirkit.service.IirService;
 import java.awt.GraphicsDevice;
@@ -92,6 +93,7 @@ public class App extends SingleFrameApplication {
      */
     public static void main(String[] args) {
         launch(App.class, args);
+        FormRunner.runSwt(); //run SWT in the main thread. OS X wants it this way.
     }
 
 }

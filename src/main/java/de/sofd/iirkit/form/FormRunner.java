@@ -51,13 +51,7 @@ public class FormRunner {
     private static Display display;
     private static boolean formThreadShouldExit = false;
 
-    /**
-     * There's only one SWT thread that runs continuously and is shared by all
-     * FormRunners (until FormRunner.dispose()). All FormRunners (if there is
-     * more than one, which is rarely the case) run their UI in this thread.
-     */
-    private static Thread swtThread = new Thread("SWT event loop") {
-
+    private static Runnable swtEventLoopRunner = new Runnable() {
         @Override
         public void run() {
             display = new Display();
@@ -69,8 +63,26 @@ public class FormRunner {
             }
             logger.debug("Form thread finished.");
         }
-
     };
+    
+    /**
+     * There's only one SWT thread that runs continuously and is shared by all
+     * FormRunners (until FormRunner.dispose()). All FormRunners (if there is
+     * more than one, which is rarely the case) run their UI in this thread.
+     */
+    private static Thread swtThread;
+
+    /**
+     * If you want to run the SWT event loop in a specific, externally created
+     * thread, rather than having FormRunner start its own internal thread for
+     * the SWT event loop, call this method before instantiating FormRunner for
+     * the first time. It'll synchronously run the SWT event loop in the
+     * caller's thread.
+     */
+    public static void runSwt() {
+        swtThread = Thread.currentThread();
+        swtEventLoopRunner.run();
+    }
 
     protected void swtExec(Runnable r) {
         if (isInSwingExec) {
@@ -116,13 +128,14 @@ public class FormRunner {
 
     public FormRunner(App app) {
         this.app = app;
-        if (!swtThread.isAlive()) {
+        if (swtThread == null) {
+            swtThread = new Thread(swtEventLoopRunner, "SWT event loop");
             swtThread.start();
-            try {
-                swtInitializedSignal.await();
-            } catch (InterruptedException ex) {
-                throw new IllegalStateException("UI thread interrupted. SHOULDN'T HAPPEN", ex);
-            }
+        }
+        try {
+            swtInitializedSignal.await();
+        } catch (InterruptedException ex) {
+            throw new IllegalStateException("UI thread interrupted. SHOULDN'T HAPPEN", ex);
         }
     }
 
