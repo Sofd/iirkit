@@ -4,8 +4,8 @@ function __fillForm(paramString) {
         return;
     }
     var params = URI("?"+paramString).query(true);
-    $('form[action="submit_ecrf"] input').each(function() {
-        var input = $(this)[0];
+    $__iirkit_jquery('form[action="submit_ecrf"] input').each(function() {
+        var input = $__iirkit_jquery(this)[0];
         var name = input.name;
         var values = params[name];
         switch (typeof(values)) {
@@ -23,12 +23,12 @@ function __fillForm(paramString) {
 
         case 'checkbox':
         case 'radio':
-            input.checked = (-1 != $.inArray(input.value, values));
+            input.checked = (-1 != $__iirkit_jquery.inArray(input.value, values));
             break;
         }
     });
-    $('form[action="submit_ecrf"] select').each(function() {
-        var select = $(this)[0];
+    $__iirkit_jquery('form[action="submit_ecrf"] select').each(function() {
+        var select = $__iirkit_jquery(this)[0];
         var name = select.name;
         var values = params[name];
         switch (typeof(values)) {
@@ -41,7 +41,7 @@ function __fillForm(paramString) {
         }
         for (var i = 0; i < select.options.length; i++) {
             var opt = select.options[i];
-            opt.selected = (-1 != $.inArray(opt.value, values));
+            opt.selected = (-1 != $__iirkit_jquery.inArray(opt.value, values));
         }
     });
 }
@@ -51,9 +51,9 @@ function __enableForm(enabled) {
         __userEnableForm(enabled);
         return;
     }
-    $('form[action="submit_ecrf"] input,select').each(function() {
-        if (!('submit' == $(this).prop('type'))) {
-            $(this).prop('disabled', !enabled);
+    $__iirkit_jquery('form[action="submit_ecrf"] input,select').each(function() {
+        if (!('submit' == $__iirkit_jquery(this).prop('type'))) {
+            $__iirkit_jquery(this).prop('disabled', !enabled);
         }
     });
 }

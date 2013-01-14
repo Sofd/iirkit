@@ -165,7 +165,9 @@ import de.sofd.util.IdentityHashSet;
                 try {
                     logger.debug("loading JS utilities...");
                     runJavascriptStreamInForm(this.getClass().getResourceAsStream("jquery-1.7.2.min.js"));
+                    runJavascriptInForm("$__iirkit_jquery = jQuery.noConflict(); null");
                     runJavascriptStreamInForm(this.getClass().getResourceAsStream("URI.min.js"));
+                    //TODO: URI.js noConflict? Or try to get rid of it.
                     runJavascriptStreamInForm(this.getClass().getResourceAsStream("formutils.js"));
                     logger.debug("DONE loading JS utilities.");
                     //statusLine.setText("Loaded.");
@@ -212,8 +214,8 @@ import de.sofd.util.IdentityHashSet;
     }
 
     public boolean isFormLoaded() {
-		return formLoaded;
-	}
+        return formLoaded;
+    }
     
     public void setUrl(String url) {
         formLoaded = false;
