@@ -207,6 +207,7 @@ public class SessionControlDialog extends javax.swing.JDialog {
             csdiag.setVisible(true);
             //TODO: sync csdiag's case list selection
             caseRunner.openCase(iirService.getCaseOf(user, 1), true, true);
+            csdiag.toFront();
         }
 
         private void exitSession() {
