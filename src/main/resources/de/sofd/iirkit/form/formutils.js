@@ -1,4 +1,8 @@
 function __fillForm(paramString) {
+    if (typeof __userFillForm == 'function') {
+        __userFillForm(paramString);
+        return;
+    }
     var params = URI("?"+paramString).query(true);
     $('form[action="submit_ecrf"] input').each(function() {
         var input = $(this)[0];
@@ -43,6 +47,10 @@ function __fillForm(paramString) {
 }
 
 function __enableForm(enabled) {
+    if (typeof __userEnableForm == 'function') {
+        __userEnableForm(enabled);
+        return;
+    }
     $('form[action="submit_ecrf"] input,select').each(function() {
         if (!('submit' == $(this).prop('type'))) {
             $(this).prop('disabled', !enabled);
