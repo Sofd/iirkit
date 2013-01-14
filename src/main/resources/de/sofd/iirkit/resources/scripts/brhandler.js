@@ -5,7 +5,6 @@ var enableLUTscale= true;
 
 importPackage(java.lang);
 importClass(java.io.File);
-importClass(Packages.de.sofd.iirkit.form.FormFrame);
 importClass(Packages.de.sofd.iirkit.service.SeriesGroup);
 importPackage(Packages.de.sofd.viskit.controllers);
 importPackage(Packages.de.sofd.viskit.controllers.cellpaint);
@@ -172,11 +171,18 @@ function getFormFrameBounds(brContext) {
 }
 
 /**
- * Called when the form frame for a case is being initialized. Displaying the HTML page etc.
- * is handled internally, so most of the time, this method doesn't have to do anything.
+ * Called after the form for a case has just been initialized. Displaying the HTML page etc.
+ * is handled internally (and has already been done when this is called),
+ * so most of the time, this method doesn't have to do anything.
  */
-function initializeFormFrame(formFrame, brContext) {
-    //runs in QT thread
+function postInitializeForm(formRunner, brContext) {
+    var nFrames = brContext.currentCase.hangingProtocol.seriesGroups.size();
+    if (nFrames >= nScreens) {
+        //no fewer series groups / image frames than screens => form is shown in front of an image frame,
+        // as per our initializeFrame / getFormFrameBounds() code above
+        // => make sure the form frame is visible
+        formRunner.bringFormToFront();
+    }
 }
 
 var multiSyncSetController = new MultiILVSyncSetController();
@@ -456,7 +462,7 @@ var orientations = DicomUtil.PatientBasedMainAxisOrientation.values();
 
 /**
  * Called during the initialization of a case after all the frames and all the panels
- * inside them have been initialized.
+ * inside them and the form frame have been initialized.
  */
 function caseStartingPostFrameInitialization(brContext) {
     print("caseStartingPostFrameInitialization");

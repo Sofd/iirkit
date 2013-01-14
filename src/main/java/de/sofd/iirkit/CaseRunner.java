@@ -68,6 +68,11 @@ public class CaseRunner implements BRContext {
     public List<BRFrameView> getCurrentCaseFrames() {
         return Collections.unmodifiableList(frames);
     }
+    
+    @Override
+    public FormRunner getFormRunner() {
+    	return formRunner;
+    }
 
     public void openCase(Case c) {
         openCase(c, false, false);
@@ -115,7 +120,7 @@ public class CaseRunner implements BRContext {
 
     protected void initializeFormFrameFor(Case c) {
         formRunner.openForm(c.getHangingProtocol().getEcrfUrl(), brHandler.getFormFrameBounds(this), isShowPreviousResult() ? c.getResult() : null);
-        brHandler.initializeFormFrame(formRunner.getFormFrame(), CaseRunner.this);
+        brHandler.postInitializeForm(formRunner, CaseRunner.this);
     }
 
     private FormListener formListener = new FormAdapter() {

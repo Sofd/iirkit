@@ -181,8 +181,8 @@ class BRHandler {
         return wrapper == null ? null : (Rectangle) wrapper.unwrap();
     }
 
-    void initializeFormFrame(FormFrame formFrame, BRContext brContext) {
-        callJsFunction("initializeFormFrame", formFrame, brContext);
+    void postInitializeForm(FormRunner formRunner, BRContext brContext) {
+        callJsFunction("postInitializeForm", formRunner, brContext);
     }
 
     void initializeViewPanel(BRViewPanel panel, String seriesUrl, BRContext brContext, int frameNr, int panelNr) {

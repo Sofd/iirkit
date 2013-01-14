@@ -226,6 +226,16 @@ public class FormRunner {
             }
         });
     }
+    
+    public void bringFormToFront() {
+        ensureFormFrameExists();
+        swtExec(new Runnable() {
+            @Override
+            public void run() {
+                formFrame.getShell().forceActive();
+            }
+        });
+    }
 
     public void hideForm() {
         swtExec(new Runnable() {
