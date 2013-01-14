@@ -143,7 +143,9 @@ import org.apache.log4j.Logger;
         try {
             logger.debug("loading JS utilities...");
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("jquery-1.7.2.min.js"));
+            runJavascriptInForm("$__iirkit_jquery = jQuery.noConflict(); null");
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("URI.min.js"));
+            //TODO: URI.js noConflict? Or try to get rid of it.
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("formutils.js"));
             logger.debug("DONE loading JS utilities.");
             statusBar().showMessage("Loaded.");
