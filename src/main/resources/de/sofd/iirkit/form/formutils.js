@@ -41,3 +41,11 @@ function __fillForm(paramString) {
         }
     });
 }
+
+function __enableForm(enabled) {
+    $('form[action="submit_ecrf"] input,select').each(function() {
+        if (!('submit' == $(this).prop('type'))) {
+            $(this).prop('disabled', !enabled);
+        }
+    });
+}

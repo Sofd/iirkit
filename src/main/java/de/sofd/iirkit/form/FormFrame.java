@@ -54,6 +54,8 @@ import org.apache.log4j.Logger;
     private boolean loadPending = false;
     private final QEventLoop waitForLoadEventLoop = new QEventLoop();
     private Exception loadError = null;
+    private boolean formLoaded = false;
+    private Boolean pendingIsFormEnabled = null;
 
     private final Collection<FormListener> formListeners = new IdentityHashSet<FormListener>();
 
@@ -145,6 +147,15 @@ import org.apache.log4j.Logger;
             runJavascriptStreamInForm(this.getClass().getResourceAsStream("formutils.js"));
             logger.debug("DONE loading JS utilities.");
             statusBar().showMessage("Loaded.");
+            formLoaded = true;
+            if (null != pendingIsFormEnabled) {
+            	boolean newIsFormEnabled = pendingIsFormEnabled;
+            	//we probably would only need to set this if it's false, except
+            	// if the user for some reason called setFormEnabled(true) explicitly
+            	// and wants this to hit the JS code.
+            	pendingIsFormEnabled = null;
+            	setFormEnabled(newIsFormEnabled);
+            }
             loadError = null;
         } catch (Exception e) {
             statusBar().showMessage("ERROR: " + e.getLocalizedMessage());
@@ -156,8 +167,14 @@ import org.apache.log4j.Logger;
             }
         }
     }
+    
+    public boolean isFormLoaded() {
+    	return formLoaded;
+    }
 
     public void setUrl(String url) {
+    	formLoaded = false;
+    	pendingIsFormEnabled = null;
         webView.load(new QUrl(url));
         loadPending = true;
         try {
@@ -199,6 +216,21 @@ import org.apache.log4j.Logger;
             logger.error("error running javascript code: " + e.getLocalizedMessage(), e);
         }
         //TODO: log JS errors
+    }
+
+    /**
+     * Enable/disable the form's input controls.
+     * 
+     * Will be reset after setURL().
+     * 
+     * @param enabled
+     */
+    public void setFormEnabled(boolean enabled) {
+    	if (isFormLoaded()) {
+            runJavascriptInForm("__enableForm(" + enabled + ")");
+    	} else {
+    		pendingIsFormEnabled = enabled;
+    	}
     }
 
     protected QWebFrame getWebFrame() {
@@ -252,6 +284,7 @@ import org.apache.log4j.Logger;
                 break;
 
             case FORM_DELETED:
+            	formLoaded = false;
                 l.formDeleted(evt);
                 break;
 

@@ -218,6 +218,22 @@ public class FormRunner {
         });
     }
 
+    /**
+     * Enable/disable the form's input controls.
+     * 
+     * Will be reset after a new form has been loaded.
+     * 
+     * @param enabled
+     */
+    public void setFormEnabled(final boolean enabled) {
+    	qtExec(new Runnable() {
+			@Override
+			public void run() {
+		    	formFrame.setFormEnabled(enabled);
+			}
+		});
+    }
+    
     public void hideForm() {
         qtExec(new Runnable() {
             @Override

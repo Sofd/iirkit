@@ -120,6 +120,7 @@ public class CaseRunner implements BRContext {
 
     protected void initializeFormFrameFor(Case c) {
         formRunner.openForm(c.getHangingProtocol().getEcrfUrl(), brHandler.getFormFrameBounds(this), isShowPreviousResult() ? c.getResult() : null);
+        formRunner.setFormEnabled(!readOnly);
         brHandler.postInitializeForm(formRunner, CaseRunner.this);
     }
 
