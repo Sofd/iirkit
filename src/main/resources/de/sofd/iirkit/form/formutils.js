@@ -23,4 +23,21 @@ function __fillForm(paramString) {
             break;
         }
     });
+    $('form[action="submit_ecrf"] select').each(function() {
+        var select = $(this)[0];
+        var name = select.name;
+        var values = params[name];
+        switch (typeof(values)) {
+        case 'string':
+            values = [values];
+            break;
+        case 'undefined':
+            values = [];
+            break;
+        }
+        for (var i = 0; i < select.options.length; i++) {
+            var opt = select.options[i];
+            opt.selected = (-1 != $.inArray(opt.value, values));
+        }
+    });
 }
