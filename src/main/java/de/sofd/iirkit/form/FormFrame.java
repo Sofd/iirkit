@@ -22,8 +22,6 @@ import org.eclipse.swt.browser.ProgressAdapter;
 import org.eclipse.swt.browser.ProgressEvent;
 import org.eclipse.swt.browser.StatusTextEvent;
 import org.eclipse.swt.browser.StatusTextListener;
-import org.eclipse.swt.events.ShellEvent;
-import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
@@ -31,7 +29,6 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
@@ -61,6 +58,8 @@ import de.sofd.util.IdentityHashSet;
 
     private boolean loadPending = false;
     private Exception loadError = null;
+    private boolean formLoaded = false;
+    private Boolean pendingIsFormEnabled = null;
 
     private final Collection<FormListener> formListeners = new IdentityHashSet<FormListener>();
     
@@ -170,6 +169,15 @@ import de.sofd.util.IdentityHashSet;
                     runJavascriptStreamInForm(this.getClass().getResourceAsStream("formutils.js"));
                     logger.debug("DONE loading JS utilities.");
                     //statusLine.setText("Loaded.");
+                    formLoaded = true;
+                    if (null != pendingIsFormEnabled) {
+                        boolean newIsFormEnabled = pendingIsFormEnabled;
+                        //we probably would only need to set this if it's false, except
+                        // if the user for some reason called setFormEnabled(true) explicitly
+                        // and wants this to hit the JS code.
+                        pendingIsFormEnabled = null;
+                        setFormEnabled(newIsFormEnabled);
+                    }
                     loadError = null;
                 } catch (Exception e) {
                     statusLine.setText("ERROR: " + e.getLocalizedMessage());
@@ -203,7 +211,13 @@ import de.sofd.util.IdentityHashSet;
         formShell.open();
     }
 
+    public boolean isFormLoaded() {
+		return formLoaded;
+	}
+    
     public void setUrl(String url) {
+        formLoaded = false;
+        pendingIsFormEnabled = null;
         browser.setUrl(url);
         loadPending = true;
         try {
@@ -258,6 +272,21 @@ import de.sofd.util.IdentityHashSet;
         //TODO: log JS errors
     }
 
+    /**
+     * Enable/disable the form's input controls.
+     * 
+     * Will be reset after setURL().
+     * 
+     * @param enabled
+     */
+    public void setFormEnabled(boolean enabled) {
+        if (isFormLoaded()) {
+            runJavascriptInForm("__enableForm(" + enabled + ")");
+        } else {
+            pendingIsFormEnabled = enabled;
+        }
+    }
+    
     public void runJavascriptStreamInForm(InputStream is) throws IOException {
         runJavascriptInForm(CharStreams.toString(new InputStreamReader(is, "utf-8")));
     }
@@ -298,6 +327,7 @@ import de.sofd.util.IdentityHashSet;
                 break;
 
             case FORM_DELETED:
+                formLoaded = false;
                 l.formDeleted(evt);
                 break;
 
