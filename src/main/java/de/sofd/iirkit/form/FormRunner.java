@@ -206,6 +206,17 @@ public class FormRunner {
             }
         });
     }
+    
+    public void bringFormToFront() {
+        ensureFormFrameExists();
+        qtExec(new Runnable() {
+            @Override
+            public void run() {
+                formFrame.activateWindow();
+                formFrame.raise();
+            }
+        });
+    }
 
     public void hideForm() {
         qtExec(new Runnable() {
