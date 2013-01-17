@@ -107,8 +107,15 @@ function caseStarting(brContext) {
     print("case starting: " + brContext.currentCase);
 }
 
+////how to order images in created ListModels
 
-var modelFactory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", new IntuitiveFileNameComparator());
+//order by file name (faster)
+var comparator = new IntuitiveFileNameComparator()
+
+//order by DICOM SL (slower; must read all DICOMs before creating the list)
+//var comparator = new SliceLocationComparator();
+
+var modelFactory = new DicomModelFactory(System.getProperty("user.home") + File.separator + "viskit-model-cache.txt", comparator);
 modelFactory.supportMultiframes = false;
 modelFactory.checkFileReadability = false;
 modelFactory.asyncMode = false;
@@ -224,7 +231,7 @@ function resetViewPanel(panel, brContext, frameNr, panelNr) {
     ui.listView.setModel(new DefaultListModel());
 }
 
-var infoMode = 0;
+var infoMode = 1;
 
 function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) {
     var ui = {};
@@ -289,6 +296,7 @@ function doInitializeViewPanel(panel, seriesModel, brContext, frameNr, panelNr) 
                 orientation = DicomUtil.getSliceOrientation(elt.getDicomImageMetaData());
             }
             return newJavaStrArr(
+                        "File: " + elt.getFile().getName() + "",
                         "SL: " + " [" + cell.getOwner().getIndexOf(cell) + "] " + dicomImageMetaData.getString(Tag.SliceLocation),
                         "O: " + orientation,
                         "WL/WW: " + cell.getWindowLocation() + "/" + cell.getWindowWidth(),
