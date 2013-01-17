@@ -146,6 +146,9 @@ import de.sofd.util.IdentityHashSet;
                                 }
                             }
                         }
+                        if (requestParams.isEmpty()) {
+                            throw new IllegalStateException("form submit with no (GET) parameters. Did you accidentally set the form's method to POST?");
+                        }
                         event.doit = false;
                         fireFormEvent(new FormEvent(FormEvent.Type.FORM_SUBMITTED, url.toString(), requestParams));
                     }
